@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import com.kssandra.ksd_common.dto.CryptoCurrencyDto;
 import com.kssandra.ksd_common.dto.CryptoDataDto;
+import com.kssandra.ksd_common.util.PriceUtils;
 import com.kssandra.ksd_persistence.dao.CryptoCurrencyDao;
 import com.kssandra.ksd_persistence.dao.CryptoDataDao;
 import com.kssandra.ksd_ws.enums.IntervalEnum;
@@ -64,12 +65,17 @@ public class IntraDayDataService {
 		IntradayDataResponseItem item = new IntradayDataResponseItem();
 
 		if (extended) {
-			item.setClose(dto.getClose());
-			item.setHigh(dto.getHigh());
-			item.setLow(dto.getLow());
-			item.setOpen(dto.getOpen());
+			item.setClose(PriceUtils.roundPrice(dto.getClose()));
+			item.setHigh(PriceUtils.roundPrice(dto.getHigh()));
+			item.setLow(PriceUtils.roundPrice(dto.getLow()));
+			item.setOpen(PriceUtils.roundPrice(dto.getOpen()));
+			item.setAvg(null);
 		} else {
-			item.setAvg((dto.getHigh() + dto.getLow()) / 2);
+			item.setAvg(PriceUtils.roundPrice((dto.getHigh() + dto.getLow()) / 2));
+			item.setClose(null);
+			item.setHigh(null);
+			item.setLow(null);
+			item.setOpen(null);
 		}
 
 		item.setDateTime(dto.getReadTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));

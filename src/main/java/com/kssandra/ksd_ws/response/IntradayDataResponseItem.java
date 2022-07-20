@@ -1,20 +1,21 @@
 package com.kssandra.ksd_ws.response;
 
-import com.kssandra.ksd_common.dto.CryptoDataDto;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class IntradayDataResponseItem {
 
 	private String dateTime;
 
-	private double open;
+	private Double open;
 
-	private double close;
+	private Double close;
 
-	private double high;
+	private Double high;
 
-	private double low;
+	private Double low;
 
-	private double avg;
+	private Double avg;
 
 	public String getDateTime() {
 		return dateTime;
@@ -24,44 +25,46 @@ public class IntradayDataResponseItem {
 		this.dateTime = dateTime;
 	}
 
-	public double getOpen() {
+	public Double getOpen() {
 		return open;
 	}
 
-	public void setOpen(double open) {
+	public void setOpen(Double open) {
 		this.open = open;
 	}
 
-	public double getClose() {
+	public Double getClose() {
 		return close;
 	}
 
-	public void setClose(double close) {
+	public void setClose(Double close) {
 		this.close = close;
 	}
 
-	public double getHigh() {
+	public Double getHigh() {
 		return high;
 	}
 
-	public void setHigh(double high) {
+	public void setHigh(Double high) {
 		this.high = high;
 	}
 
-	public double getLow() {
+	public Double getLow() {
 		return low;
 	}
 
-	public void setLow(double low) {
+	public void setLow(Double low) {
 		this.low = low;
 	}
 
-	public double getAvg() {
+	public Double getAvg() {
 		return avg;
 	}
 
-	public void setAvg(double avg) {
+	public void setAvg(Double avg) {
 		this.avg = avg;
 	}
+
+
 
 }
