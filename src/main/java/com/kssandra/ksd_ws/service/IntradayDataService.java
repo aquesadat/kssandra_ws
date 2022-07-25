@@ -11,9 +11,11 @@ import org.springframework.stereotype.Service;
 
 import com.kssandra.ksd_common.dto.CryptoCurrencyDto;
 import com.kssandra.ksd_common.dto.CryptoDataDto;
+
 import com.kssandra.ksd_common.util.PriceUtils;
 import com.kssandra.ksd_persistence.dao.CryptoCurrencyDao;
 import com.kssandra.ksd_persistence.dao.CryptoDataDao;
+
 import com.kssandra.ksd_ws.enums.IntervalEnum;
 import com.kssandra.ksd_ws.exception.KsdServiceException;
 import com.kssandra.ksd_ws.request.IntradayDataRequest;
@@ -21,7 +23,7 @@ import com.kssandra.ksd_ws.response.IntradayDataResponse;
 import com.kssandra.ksd_ws.response.IntradayDataResponseItem;
 
 @Service
-public class IntraDayDataService {
+public class IntradayDataService {
 
 	@Autowired
 	CryptoDataDao cryptoDataDao;

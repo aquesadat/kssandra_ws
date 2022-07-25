@@ -3,12 +3,12 @@ package com.kssandra.ksd_ws.validation;
 import org.apache.commons.lang3.StringUtils;
 
 import com.kssandra.ksd_ws.enums.IntervalEnum;
-import com.kssandra.ksd_ws.request.IntradayDataRequest;
+import com.kssandra.ksd_ws.request.IntradayPredictionRequest;
 import com.kssandra.ksd_ws.response.error.BadRequest;
 
-public class IntradayDataValidator {
+public class IntradayPredictionValidator {
 
-	public static BadRequest validate(IntradayDataRequest intraRq) {
+	public static BadRequest validate(IntradayPredictionRequest intraRq) {
 
 		BadRequest badRq = new BadRequest();
 

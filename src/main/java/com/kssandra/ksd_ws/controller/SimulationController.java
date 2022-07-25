@@ -14,23 +14,23 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.kssandra.ksd_common.util.LogUtil;
 import com.kssandra.ksd_ws.exception.KsdServiceException;
-import com.kssandra.ksd_ws.request.IntradayDataRequest;
-import com.kssandra.ksd_ws.response.IntradayDataResponse;
+import com.kssandra.ksd_ws.request.IntradaySimulationRequest;
+import com.kssandra.ksd_ws.response.IntradaySimulationResponse;
 import com.kssandra.ksd_ws.response.error.BadRequest;
-import com.kssandra.ksd_ws.service.IntraDayDataService;
-import com.kssandra.ksd_ws.validation.IntradayDataValidator;
+import com.kssandra.ksd_ws.service.IntradaySimulationService;
+import com.kssandra.ksd_ws.validation.IntradaySimulationValidator;
 
 @RestController
 @RequestMapping("/api/v1")
-public class IntradayDataController {
+public class SimulationController {
+
+	private static final Logger LOG = LoggerFactory.getLogger(SimulationController.class);
 
 	@Autowired
-	IntraDayDataService intraDayService;
+	IntradaySimulationService intradaySimulService;
 
-	private static final Logger LOG = LoggerFactory.getLogger(IntradayDataController.class);
-
-	@PostMapping(value = "/intraday/data", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-	public Object getIntraDayData(@RequestBody IntradayDataRequest intraRq, HttpServletRequest request,
+	@PostMapping(value = "/intraday/simulate", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+	public Object getIntraDayData(@RequestBody IntradaySimulationRequest intraRq, HttpServletRequest request,
 			HttpServletResponse response) {
 
 		Object finalResponse = null;
@@ -41,23 +41,23 @@ public class IntradayDataController {
 		}
 
 		// Validate request
-		BadRequest badRequest = IntradayDataValidator.validate(intraRq);
+		BadRequest badRequest = IntradaySimulationValidator.validate(intraRq);
 
 		try {
 			if (badRequest.getErrors() != null && !badRequest.getErrors().isEmpty()) {
 				finalResponse = badRequest;
 				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			} else {
-				IntradayDataResponse intraRs = intraDayService.getData(intraRq);
+				IntradaySimulationResponse intraRs = intradaySimulService.getSimulation(intraRq);
 				finalResponse = intraRs;
 				response.setStatus(HttpServletResponse.SC_OK);
 			}
 		} catch (KsdServiceException ksdEx) {
-			LOG.error(ksdEx.getMessage());
+			LOG.error("Error proccessing request", ksdEx);
 			finalResponse = "Error proccessing request. Please contact our support team.";
 			response.setStatus(HttpServletResponse.SC_CONFLICT);
 		} catch (Exception ex) {
-			LOG.error(ex.getMessage());
+			LOG.error("Unexpected error", ex);
 			finalResponse = "Unexpected error proccessing request. Please contact our support team.";
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 		}
@@ -65,5 +65,4 @@ public class IntradayDataController {
 		return finalResponse;
 
 	}
-
 }
