@@ -26,7 +26,7 @@ import com.kssandra.ksd_ws.response.IntradayPredictionResponse;
 import com.kssandra.ksd_ws.response.IntradayPredictionResponseItem;
 
 @Service
-public class IntradayPredictionService {
+public class IntradayPredictionService2 {
 
 	@Autowired
 	PredictionDao predictionDao;
@@ -112,82 +112,22 @@ public class IntradayPredictionService {
 
 	private String beautifySuccess(Double success) {
 
-		String result;
+		StringBuilder result = new StringBuilder();
 
 		if (success == null) {
-			result = "N/A";
+			result.append("N/A");
 		} else {
 			double aux = 100 - (Math.abs(success) * 20);
 			if (aux > 90) {
-				result = ">90%";
+				result.append(">");
 			} else if (aux < 40) {
-				result = "<40%";
-			} else {
-				result = String.valueOf((int) aux) + "%";
+				result.append("<");
 			}
+			result.append(String.valueOf((int) aux)).append("%");
 		}
 
-		return result;
+		return result.toString();
 	}
-
-//	/**
-//	 * 1.- Recupera las combinaciones de sample-advance con el success
-//	 * correspondiente 2.- Para cada prediction reucperada de bbdd, se queda con
-//	 * aquella que tiene mejor success en prediciones pasada.
-//	 * 
-//	 * @param predictions
-//	 * @param interval
-//	 * @return
-//	 */
-//	private List<IntradayPredictionResponseItem> getItems(List<PredictionDto> predictions, IntervalEnum interval) {
-//		List<IntradayPredictionResponseItem> items = new ArrayList<>();
-//
-//		if (!predictions.isEmpty()) {
-//
-//			List<PredictionSuccessDto> predSuccess = predictionSuccessDao
-//					.findSuccess(predictions.get(0).getCxCurrencyDto());
-//
-//			Map<LocalDateTime, IntradayPredictionResponseItem> bestPredictions = new LinkedHashMap<>();
-//
-//			predictions.stream().filter(dto -> interval.getValues().contains(dto.getPredictTime().getMinute()))
-//					.forEach(dto -> {
-//						if (bestPredictions.containsKey(dto.getPredictTime())) {
-//							Double success = getSuccess(dto, predSuccess);
-//							if (success != null && bestPredictions.get(dto.getPredictTime()).getSuccess() != null
-//									&& bestPredictions.get(dto.getPredictTime()).getSuccess() > success) {
-//								bestPredictions.get(dto.getPredictTime())
-//										.setExpectedVal(PriceUtils.roundPrice(dto.getPredictVal()));
-//								bestPredictions.get(dto.getPredictTime()).setSuccess(success);
-//							}
-//						} else {
-//							bestPredictions.put(dto.getPredictTime(), getIntraRsItem(dto, predSuccess));
-//						}
-//					});
-//
-//			items = bestPredictions.values().stream().collect(Collectors.toList());
-//
-//		}
-//
-//		items.forEach(item -> item.setSuccess(beautifySuccess(item.getSuccess())));
-//
-//		return items;
-//	}
-//
-//	private Double beautifySuccess(Double success) {
-//		double aux = 100 - (Math.abs(success) * 20);
-//
-//		return null;
-//	}
-//
-//	private IntradayPredictionResponseItem getIntraRsItem(PredictionDto dto, List<PredictionSuccessDto> predSuccess) {
-//		IntradayPredictionResponseItem item = new IntradayPredictionResponseItem();
-//
-//		item.setExpectedVal(PriceUtils.roundPrice(dto.getPredictVal()));
-//		item.setSuccess(getSuccess(dto, predSuccess));
-//		item.setDateTime(dto.getPredictTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
-//
-//		return item;
-//	}
 
 	private Double getSuccess(PredictionDto predictionDto, List<PredictionSuccessDto> predSuccess) {
 

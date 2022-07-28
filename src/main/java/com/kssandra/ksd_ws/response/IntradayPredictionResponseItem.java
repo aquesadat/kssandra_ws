@@ -8,8 +8,8 @@ public class IntradayPredictionResponseItem {
 	private String dateTime;
 
 	private Double expectedVal;
-	
-	private Double success;
+
+	private String success;
 
 	public String getDateTime() {
 		return dateTime;
@@ -27,11 +27,11 @@ public class IntradayPredictionResponseItem {
 		this.expectedVal = expectedVal;
 	}
 
-	public Double getSuccess() {
+	public String getSuccess() {
 		return success;
 	}
 
-	public void setSuccess(Double success) {
+	public void setSuccess(String success) {
 		this.success = success;
 	}
 
