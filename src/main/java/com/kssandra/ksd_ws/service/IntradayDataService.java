@@ -58,7 +58,8 @@ public class IntradayDataService {
 		List<IntradayDataResponseItem> items = new ArrayList<>();
 
 		data.stream().filter(dto -> interval.getValues().contains(dto.getReadTime().getMinute()))
-				.map(dto -> items.add(getIntraRsItem(dto, extended))).collect(Collectors.toList());
+				.sorted((e1, e2) -> e2.getReadTime().compareTo(e1.getReadTime()))
+				.forEach(dto -> items.add(getIntraRsItem(dto, extended)));
 
 		return items;
 	}
