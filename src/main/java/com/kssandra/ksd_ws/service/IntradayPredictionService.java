@@ -82,8 +82,10 @@ public class IntradayPredictionService {
 					.forEach(dto -> {
 						if (bestPredictions.containsKey(dto.getPredictTime())) {
 							Double success = getSuccess(dto, predSuccess);
-							if (success != null && bestPredictions.get(dto.getPredictTime()).getSuccess() != null
-									&& bestPredictions.get(dto.getPredictTime()).getSuccess() > success) {
+
+							if (success != null && (bestPredictions.get(dto.getPredictTime()).getSuccess() == null
+									|| (bestPredictions.get(dto.getPredictTime()).getSuccess() != null
+											&& bestPredictions.get(dto.getPredictTime()).getSuccess() > success))) {
 								bestPredictions.get(dto.getPredictTime()).setPredictVal(dto.getPredictVal());
 								bestPredictions.get(dto.getPredictTime()).setSuccess(success);
 							}
@@ -93,7 +95,8 @@ public class IntradayPredictionService {
 						}
 					});
 
-			bestPredictions.values().stream().forEach(pred -> items.add(predToItem(pred)));
+			bestPredictions.values().stream().sorted((e1, e2) -> e1.getPredictTime().compareTo(e2.getPredictTime()))
+					.forEach(pred -> items.add(predToItem(pred)));
 		}
 
 		return items;
@@ -188,7 +191,7 @@ public class IntradayPredictionService {
 //		return item;
 //	}
 
-	private Double getSuccess(PredictionDto predictionDto, List<PredictionSuccessDto> predSuccess) {
+	public static Double getSuccess(PredictionDto predictionDto, List<PredictionSuccessDto> predSuccess) {
 
 		Optional<PredictionSuccessDto> result = predSuccess.stream()
 				.filter(dto -> dto.getAdvance() == predictionDto.getAdvance()

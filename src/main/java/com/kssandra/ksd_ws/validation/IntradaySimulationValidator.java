@@ -1,5 +1,8 @@
 package com.kssandra.ksd_ws.validation;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 import org.apache.commons.lang3.StringUtils;
 
 import com.kssandra.ksd_common.util.DateUtils;
@@ -14,6 +17,8 @@ public class IntradaySimulationValidator {
 		BadRequest badRq = new BadRequest();
 
 		if (intraRq != null) {
+
+			boolean hasDate = false;
 			if (intraRq.getCxCurr() == null) {
 				badRq.addErrorsItem(ValErrors.MISSING_INVALID.concat("cxCurr"));
 			}
@@ -22,7 +27,21 @@ public class IntradaySimulationValidator {
 				badRq.addErrorsItem(ValErrors.MISSING_INVALID.concat("exCurr"));
 			}
 
-			if (StringUtils.isBlank(intraRq.getInterval()) || IntervalEnum.fromName(intraRq.getInterval()) == null) {
+			if (StringUtils.isNotBlank(intraRq.getDateTime())
+					&& !ValidationUtils.validDateTime(intraRq.getDateTime(), DateUtils.FORMAT_YYYYMMDD_HHMM)) {
+				badRq.addErrorsItem(ValErrors.INVALID.concat("dateTime"));
+			} else {
+				LocalDateTime rqDate = LocalDateTime.parse(intraRq.getDateTime(),
+						DateTimeFormatter.ofPattern(DateUtils.FORMAT_YYYYMMDD_HHMM));
+				if (rqDate.isAfter(LocalDateTime.now().plusDays(1))) {
+					badRq.addErrorsItem(ValErrors.INVALID.concat("dateTime").concat(". It must be in the next 24h"));
+				} else {
+					hasDate = true;
+				}
+			}
+
+			if (hasDate && StringUtils.isBlank(intraRq.getInterval())
+					&& IntervalEnum.fromName(intraRq.getInterval()) == null) {
 				badRq.addErrorsItem(ValErrors.MISSING_INVALID.concat("interval"));
 			}
 
@@ -30,16 +49,17 @@ public class IntradaySimulationValidator {
 				badRq.addErrorsItem(ValErrors.MISSING_INVALID.concat("amount"));
 			}
 
-			if (intraRq.getPurchaseCommision() != null && intraRq.getPurchaseCommision() < 0) {
-				badRq.addErrorsItem(ValErrors.INVALID.concat("purchaseCommision"));
+			if (intraRq.getPurchaseFee() != null && intraRq.getPurchaseFee() < 0) {
+				badRq.addErrorsItem(ValErrors.INVALID.concat("purchaseFee"));
 			}
 
-			if (intraRq.getSaleCommision() != null && intraRq.getSaleCommision() < 0) {
-				badRq.addErrorsItem(ValErrors.INVALID.concat("saleCommision"));
+			if (intraRq.getSaleFee() != null && intraRq.getSaleFee() < 0) {
+				badRq.addErrorsItem(ValErrors.INVALID.concat("saleFee"));
 			}
 
-			if (StringUtils.isNotBlank(intraRq.getDateTime())) {
-				ValidationUtils.validDateTime(intraRq.getDateTime(), DateUtils.FORMAT_YYYYMMDD_HHMM);
+			if (StringUtils.isNotBlank(intraRq.getDateTime())
+					&& !ValidationUtils.validDateTime(intraRq.getDateTime(), DateUtils.FORMAT_YYYYMMDD_HHMM)) {
+				badRq.addErrorsItem(ValErrors.INVALID.concat("dateTime"));
 			}
 
 		} else {

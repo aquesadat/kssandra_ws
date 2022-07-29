@@ -6,9 +6,9 @@ public class IntradaySimulationRequest extends IntraDayRequest {
 
 	private Double amount;
 
-	private Double purchaseCommision;
+	private Double purchaseFee;
 
-	private Double saleCommision;
+	private Double saleFee;
 
 	private String dateTime;
 
@@ -20,20 +20,20 @@ public class IntradaySimulationRequest extends IntraDayRequest {
 		this.amount = amount;
 	}
 
-	public Double getPurchaseCommision() {
-		return purchaseCommision;
+	public Double getPurchaseFee() {
+		return purchaseFee;
 	}
 
-	public void setPurchaseCommision(Double purchaseCommision) {
-		this.purchaseCommision = purchaseCommision;
+	public void setPurchaseFee(Double purchaseFee) {
+		this.purchaseFee = purchaseFee;
 	}
 
-	public Double getSaleCommision() {
-		return saleCommision;
+	public Double getSaleFee() {
+		return saleFee;
 	}
 
-	public void setSaleCommision(Double saleCommision) {
-		this.saleCommision = saleCommision;
+	public void setSaleFee(Double saleFee) {
+		this.saleFee = saleFee;
 	}
 
 	public String getDateTime() {

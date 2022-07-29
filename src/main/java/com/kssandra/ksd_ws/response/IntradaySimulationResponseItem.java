@@ -8,8 +8,10 @@ public class IntradaySimulationResponseItem {
 	private String dateTime;
 
 	private Double expectedVal;
-	
+
 	private Double success;
+
+	private Double profit;
 
 	public String getDateTime() {
 		return dateTime;
@@ -33,6 +35,14 @@ public class IntradaySimulationResponseItem {
 
 	public void setSuccess(Double success) {
 		this.success = success;
+	}
+
+	public Double getProfit() {
+		return profit;
+	}
+
+	public void setProfit(Double profit) {
+		this.profit = profit;
 	}
 
 }
