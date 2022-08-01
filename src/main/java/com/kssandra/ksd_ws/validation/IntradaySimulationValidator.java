@@ -27,16 +27,18 @@ public class IntradaySimulationValidator {
 				badRq.addErrorsItem(ValErrors.MISSING_INVALID.concat("exCurr"));
 			}
 
-			if (StringUtils.isNotBlank(intraRq.getDateTime())
-					&& !ValidationUtils.validDateTime(intraRq.getDateTime(), DateUtils.FORMAT_YYYYMMDD_HHMM)) {
-				badRq.addErrorsItem(ValErrors.INVALID.concat("dateTime"));
-			} else {
-				LocalDateTime rqDate = LocalDateTime.parse(intraRq.getDateTime(),
-						DateTimeFormatter.ofPattern(DateUtils.FORMAT_YYYYMMDD_HHMM));
-				if (rqDate.isAfter(LocalDateTime.now().plusDays(1))) {
-					badRq.addErrorsItem(ValErrors.INVALID.concat("dateTime").concat(". It must be in the next 24h"));
+			if (StringUtils.isNotBlank(intraRq.getDateTime())) {
+				if (!ValidationUtils.validDateTime(intraRq.getDateTime(), DateUtils.FORMAT_YYYYMMDD_HHMM)) {
+					badRq.addErrorsItem(ValErrors.INVALID.concat("dateTime"));
 				} else {
-					hasDate = true;
+					LocalDateTime rqDate = LocalDateTime.parse(intraRq.getDateTime(),
+							DateTimeFormatter.ofPattern(DateUtils.FORMAT_YYYYMMDD_HHMM));
+					if (rqDate.isAfter(LocalDateTime.now().plusDays(1))) {
+						badRq.addErrorsItem(
+								ValErrors.INVALID.concat("dateTime").concat(". It must be in the next 24h"));
+					} else {
+						hasDate = true;
+					}
 				}
 			}
 
@@ -55,11 +57,6 @@ public class IntradaySimulationValidator {
 
 			if (intraRq.getSaleFee() != null && intraRq.getSaleFee() < 0) {
 				badRq.addErrorsItem(ValErrors.INVALID.concat("saleFee"));
-			}
-
-			if (StringUtils.isNotBlank(intraRq.getDateTime())
-					&& !ValidationUtils.validDateTime(intraRq.getDateTime(), DateUtils.FORMAT_YYYYMMDD_HHMM)) {
-				badRq.addErrorsItem(ValErrors.INVALID.concat("dateTime"));
 			}
 
 		} else {
