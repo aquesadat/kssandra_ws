@@ -3,7 +3,6 @@ package com.kssandra.ksd_ws.service;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,6 +15,7 @@ import com.kssandra.ksd_common.dto.CryptoDataDto;
 import com.kssandra.ksd_common.dto.PredictionDto;
 import com.kssandra.ksd_common.dto.PredictionSuccessDto;
 import com.kssandra.ksd_common.util.DateUtils;
+import com.kssandra.ksd_common.util.PriceUtils;
 import com.kssandra.ksd_persistence.dao.CryptoCurrencyDao;
 import com.kssandra.ksd_persistence.dao.CryptoDataDao;
 import com.kssandra.ksd_persistence.dao.PredictionDao;
@@ -86,24 +86,10 @@ public class IntradaySimulationService {
 			List<PredictionSuccessDto> predSuccess = predictionSuccessDao
 					.findSuccess(predictions.get(0).getCxCurrencyDto());
 
-			Map<LocalDateTime, PredictionDto> bestPredictions = new LinkedHashMap<>();
+			Map<LocalDateTime, PredictionDto> bestPredictions = IntradayPredictionService
+					.getBestPredictions(predictions, predSuccess, interval);
 
-			predictions.stream().filter(dto -> interval.getValues().contains(dto.getPredictTime().getMinute()))
-					.forEach(dto -> {
-						if (bestPredictions.containsKey(dto.getPredictTime())) {
-							Double success = IntradayPredictionService.getSuccess(dto, predSuccess);
-							if (success != null && bestPredictions.get(dto.getPredictTime()).getSuccess() != null
-									&& bestPredictions.get(dto.getPredictTime()).getSuccess() > success) {
-								bestPredictions.get(dto.getPredictTime()).setPredictVal(dto.getPredictVal());
-								bestPredictions.get(dto.getPredictTime()).setSuccess(success);
-							}
-						} else {
-							dto.setSuccess(IntradayPredictionService.getSuccess(dto, predSuccess));
-							bestPredictions.put(dto.getPredictTime(), dto);
-						}
-					});
-
-			bestPredictions.values().stream()
+			bestPredictions.values().stream().sorted((e1, e2) -> e1.getPredictTime().compareTo(e2.getPredictTime()))
 					.forEach(pred -> items.add(predToItem(pred, amount, purchaseFee, saleFee, dateTime, currVal)));
 		}
 
@@ -114,19 +100,16 @@ public class IntradaySimulationService {
 			Double saleFee, String dateTime, Double currVal) {
 		IntradaySimulationResponseItem item = new IntradaySimulationResponseItem();
 
+		item.setDateTime(dateTime != null ? dateTime
+				: dto.getPredictTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
 		item.setExpectedVal(dto.getPredictVal());
-		List<PredictionSuccessDto> predSuccess = predictionSuccessDao.findSuccess(dto.getCxCurrencyDto(),
-				dto.getSampleSize(), dto.getAdvance());
 
-		predSuccess.stream().max((ps1, ps2) -> ps1.getSuccess().compareTo(ps2.getSuccess()))
-				.ifPresent(elem -> item.setSuccess(elem.getSuccess()));
-
-		item.setDateTime(dateTime);
-		item.setExpectedVal(amount / currVal * dto.getPredictVal());
+		item.setSuccess(IntradayPredictionService.beautifySuccess(dto.getSuccess()));
+		item.setExpectedVal(PriceUtils.roundPrice(amount / currVal * dto.getPredictVal()));
 
 		saleFee = (saleFee == null || saleFee == 0) ? 1 : saleFee;
 		purchaseFee = (purchaseFee == null || purchaseFee == 0) ? 1 : purchaseFee;
-		item.setProfit((item.getExpectedVal() * saleFee) - (amount * purchaseFee));
+		item.setProfit(PriceUtils.roundPrice((item.getExpectedVal() * saleFee) - (amount * purchaseFee)));
 
 		return item;
 	}

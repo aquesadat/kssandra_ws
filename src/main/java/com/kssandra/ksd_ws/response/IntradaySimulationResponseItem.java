@@ -9,7 +9,7 @@ public class IntradaySimulationResponseItem {
 
 	private Double expectedVal;
 
-	private Double success;
+	private String success;
 
 	private Double profit;
 
@@ -29,11 +29,11 @@ public class IntradaySimulationResponseItem {
 		this.expectedVal = expectedVal;
 	}
 
-	public Double getSuccess() {
+	public String getSuccess() {
 		return success;
 	}
 
-	public void setSuccess(Double success) {
+	public void setSuccess(String success) {
 		this.success = success;
 	}
 

@@ -76,30 +76,38 @@ public class IntradayPredictionService {
 			List<PredictionSuccessDto> predSuccess = predictionSuccessDao
 					.findSuccess(predictions.get(0).getCxCurrencyDto());
 
-			Map<LocalDateTime, PredictionDto> bestPredictions = new LinkedHashMap<>();
-
-			predictions.stream().filter(dto -> interval.getValues().contains(dto.getPredictTime().getMinute()))
-					.forEach(dto -> {
-						if (bestPredictions.containsKey(dto.getPredictTime())) {
-							Double success = getSuccess(dto, predSuccess);
-
-							if (success != null && (bestPredictions.get(dto.getPredictTime()).getSuccess() == null
-									|| (bestPredictions.get(dto.getPredictTime()).getSuccess() != null
-											&& bestPredictions.get(dto.getPredictTime()).getSuccess() > success))) {
-								bestPredictions.get(dto.getPredictTime()).setPredictVal(dto.getPredictVal());
-								bestPredictions.get(dto.getPredictTime()).setSuccess(success);
-							}
-						} else {
-							dto.setSuccess(getSuccess(dto, predSuccess));
-							bestPredictions.put(dto.getPredictTime(), dto);
-						}
-					});
+			Map<LocalDateTime, PredictionDto> bestPredictions = getBestPredictions(predictions, predSuccess, interval);
 
 			bestPredictions.values().stream().sorted((e1, e2) -> e1.getPredictTime().compareTo(e2.getPredictTime()))
 					.forEach(pred -> items.add(predToItem(pred)));
 		}
 
 		return items;
+	}
+
+	public static Map<LocalDateTime, PredictionDto> getBestPredictions(List<PredictionDto> predictions,
+			List<PredictionSuccessDto> predSuccess, IntervalEnum interval) {
+
+		Map<LocalDateTime, PredictionDto> bestPredictions = new LinkedHashMap<>();
+
+		predictions.stream().filter(dto -> interval.getValues().contains(dto.getPredictTime().getMinute()))
+				.forEach(dto -> {
+					if (bestPredictions.containsKey(dto.getPredictTime())) {
+						Double success = getSuccess(dto, predSuccess);
+
+						if (success != null && (bestPredictions.get(dto.getPredictTime()).getSuccess() == null
+								|| (bestPredictions.get(dto.getPredictTime()).getSuccess() != null
+										&& bestPredictions.get(dto.getPredictTime()).getSuccess() > success))) {
+							bestPredictions.get(dto.getPredictTime()).setPredictVal(dto.getPredictVal());
+							bestPredictions.get(dto.getPredictTime()).setSuccess(success);
+						}
+					} else {
+						dto.setSuccess(getSuccess(dto, predSuccess));
+						bestPredictions.put(dto.getPredictTime(), dto);
+					}
+				});
+
+		return bestPredictions;
 	}
 
 	private IntradayPredictionResponseItem predToItem(PredictionDto dto) {
@@ -112,7 +120,7 @@ public class IntradayPredictionService {
 		return item;
 	}
 
-	private String beautifySuccess(Double success) {
+	public static String beautifySuccess(Double success) {
 
 		String result;
 
