@@ -53,7 +53,7 @@ public class IntradaySimulationService {
 
 			if (hasDate) {
 				LocalDateTime rqDate = LocalDateTime.parse(intraRq.getDateTime(),
-						DateTimeFormatter.ofPattern(DateUtils.FORMAT_YYYYMMDD_HHMM));
+						DateTimeFormatter.ofPattern(DateUtils.FORMAT_DDMMYYYY_HHMM));
 				predictions = predictionDao.findByDate(cxCurrDto, rqDate);
 			} else {
 				predictions = predictionDao.findAfterDate(cxCurrDto, LocalDateTime.now(),
@@ -102,13 +102,11 @@ public class IntradaySimulationService {
 
 		item.setDateTime(dateTime != null ? dateTime
 				: dto.getPredictTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
-		item.setExpectedVal(dto.getPredictVal());
-
 		item.setSuccess(IntradayPredictionService.beautifySuccess(dto.getSuccess()));
 		item.setExpectedVal(PriceUtils.roundPrice(amount / currVal * dto.getPredictVal()));
 
-		saleFee = (saleFee == null || saleFee == 0) ? 1 : saleFee;
-		purchaseFee = (purchaseFee == null || purchaseFee == 0) ? 1 : purchaseFee;
+		saleFee = (saleFee == null || saleFee == 0) ? 1 : (100 - saleFee) / 100;
+		purchaseFee = (purchaseFee == null || purchaseFee == 0) ? 1 : (100 + purchaseFee) / 100;
 		item.setProfit(PriceUtils.roundPrice((item.getExpectedVal() * saleFee) - (amount * purchaseFee)));
 
 		return item;
