@@ -28,11 +28,12 @@ public class IntradaySimulationValidator {
 			}
 
 			if (StringUtils.isNotBlank(intraRq.getDateTime())) {
-				if (!ValidationUtils.validDateTime(intraRq.getDateTime(), DateUtils.FORMAT_YYYYMMDD_HHMM)) {
-					badRq.addErrorsItem(ValErrors.INVALID.concat("dateTime"));
+				if (!ValidationUtils.validDateTime(intraRq.getDateTime(), DateUtils.FORMAT_DDMMYYYY_HHMM)) {
+					badRq.addErrorsItem(ValErrors.INVALID.concat("dateTime").concat("Expected format: ")
+							.concat(DateUtils.FORMAT_DDMMYYYY_HHMM));
 				} else {
 					LocalDateTime rqDate = LocalDateTime.parse(intraRq.getDateTime(),
-							DateTimeFormatter.ofPattern(DateUtils.FORMAT_YYYYMMDD_HHMM));
+							DateTimeFormatter.ofPattern(DateUtils.FORMAT_DDMMYYYY_HHMM));
 					if (rqDate.isAfter(LocalDateTime.now().plusDays(1))) {
 						badRq.addErrorsItem(
 								ValErrors.INVALID.concat("dateTime").concat(". It must be in the next 24h"));
@@ -42,7 +43,7 @@ public class IntradaySimulationValidator {
 				}
 			}
 
-			if (hasDate && StringUtils.isBlank(intraRq.getInterval())
+			if (!hasDate && StringUtils.isBlank(intraRq.getInterval())
 					&& IntervalEnum.fromName(intraRq.getInterval()) == null) {
 				badRq.addErrorsItem(ValErrors.MISSING_INVALID.concat("interval"));
 			}
@@ -51,11 +52,11 @@ public class IntradaySimulationValidator {
 				badRq.addErrorsItem(ValErrors.MISSING_INVALID.concat("amount"));
 			}
 
-			if (intraRq.getPurchaseFee() != null && intraRq.getPurchaseFee() < 0) {
+			if (intraRq.getPurchaseFee() != null && (intraRq.getPurchaseFee() < 0 || intraRq.getPurchaseFee() > 100)) {
 				badRq.addErrorsItem(ValErrors.INVALID.concat("purchaseFee"));
 			}
 
-			if (intraRq.getSaleFee() != null && intraRq.getSaleFee() < 0) {
+			if (intraRq.getSaleFee() != null && (intraRq.getSaleFee() < 0 || intraRq.getSaleFee() > 100)) {
 				badRq.addErrorsItem(ValErrors.INVALID.concat("saleFee"));
 			}
 

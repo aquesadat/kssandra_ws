@@ -90,7 +90,8 @@ public class IntradayPredictionService {
 
 		Map<LocalDateTime, PredictionDto> bestPredictions = new LinkedHashMap<>();
 
-		predictions.stream().filter(dto -> interval.getValues().contains(dto.getPredictTime().getMinute()))
+		predictions.stream().filter(
+				interval == null ? dto -> true : dto -> interval.getValues().contains(dto.getPredictTime().getMinute()))
 				.forEach(dto -> {
 					if (bestPredictions.containsKey(dto.getPredictTime())) {
 						Double success = getSuccess(dto, predSuccess);
