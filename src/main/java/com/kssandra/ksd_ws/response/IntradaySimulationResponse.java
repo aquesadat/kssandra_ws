@@ -1,8 +1,11 @@
 package com.kssandra.ksd_ws.response;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class IntradaySimulationResponse {
+public class IntradaySimulationResponse implements Serializable {
+
+	private static final long serialVersionUID = 8979141946266960269L;
 
 	private String cxCurr;
 

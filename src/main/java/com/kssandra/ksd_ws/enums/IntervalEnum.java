@@ -6,7 +6,7 @@ import java.util.stream.Stream;
 
 public enum IntervalEnum {
 
-	_15m("15m", Arrays.asList(0, 15, 30, 45)), _30m("30m", Arrays.asList(0,30)), _60m("60m", Arrays.asList(0));
+	M15("15m", Arrays.asList(0, 15, 30, 45)), M30("30m", Arrays.asList(0, 30)), M60("60m", Arrays.asList(0));
 
 	private String name;
 
@@ -25,9 +25,8 @@ public enum IntervalEnum {
 		return values;
 	}
 
-    public static IntervalEnum fromName(String name) {
-    	return Stream.of(IntervalEnum.values()).filter(ivl -> ivl.getName().equals(name)).findFirst().orElse(null);
-    }
-	
-	
+	public static IntervalEnum fromName(String name) {
+		return Stream.of(IntervalEnum.values()).filter(ivl -> ivl.getName().equals(name)).findFirst().orElse(null);
+	}
+
 }

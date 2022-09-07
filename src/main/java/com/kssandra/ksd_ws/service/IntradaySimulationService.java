@@ -45,7 +45,7 @@ public class IntradaySimulationService {
 
 		IntradaySimulationResponse response = null;
 
-		CryptoCurrencyDto cxCurrDto = cxCurrDao.findByCode(intraRq.getCxCurr().getValue());
+		CryptoCurrencyDto cxCurrDto = cxCurrDao.findByCode(intraRq.getCxCurr());
 		boolean hasDate = StringUtils.isNotBlank(intraRq.getDateTime());
 		if (cxCurrDto != null) {
 
@@ -54,6 +54,9 @@ public class IntradaySimulationService {
 			if (hasDate) {
 				LocalDateTime rqDate = LocalDateTime.parse(intraRq.getDateTime(),
 						DateTimeFormatter.ofPattern(DateUtils.FORMAT_DDMMYYYY_HHMM));
+				if (rqDate.isAfter(LocalDateTime.now().plusDays(1)) || rqDate.isBefore(LocalDateTime.now())) {
+					throw new KsdServiceException("dateTime must be in the next 24h");
+				}
 				predictions = predictionDao.findByDate(cxCurrDto, rqDate);
 			} else {
 				predictions = predictionDao.findAfterDate(cxCurrDto, LocalDateTime.now(),
@@ -63,15 +66,14 @@ public class IntradaySimulationService {
 			IntervalEnum interval = IntervalEnum.fromName(intraRq.getInterval());
 
 			response = new IntradaySimulationResponse();
-			response.setCxCurr(intraRq.getCxCurr().getValue());
-			response.setExCurr(intraRq.getExCurr().getValue());
+			response.setCxCurr(intraRq.getCxCurr());
+			response.setExCurr(intraRq.getExCurr());
 			Double currVal = getCurrVal(cxCurrDto);
 			response.setItems(getItems(predictions, interval, intraRq.getAmount(), intraRq.getPurchaseFee(),
 					intraRq.getSaleFee(), intraRq.getDateTime(), currVal));
 
 		} else {
-			throw new KsdServiceException(
-					"Any cxcurrency found in DB for code: ".concat(intraRq.getCxCurr().getValue()));
+			throw new KsdServiceException("Any cxcurrency found in DB for code: ".concat(intraRq.getCxCurr()));
 		}
 
 		return response;
@@ -112,8 +114,9 @@ public class IntradaySimulationService {
 		return item;
 	}
 
-	private Double getCurrVal(CryptoCurrencyDto cxCurrDto) {
-		CryptoDataDto cxDataDto = cxDataDao.getLastInserted(cxCurrDto);
+	private Double getCurrVal(CryptoCurrencyDto cxCurrDto) throws KsdServiceException {
+		CryptoDataDto cxDataDto = cxDataDao.getLastInserted(cxCurrDto)
+				.orElseThrow(() -> new KsdServiceException("Any data stored for cxcurr".concat(cxCurrDto.getCode())));
 		return (cxDataDto.getHigh() + cxDataDto.getLow()) / 2;
 	}
 }
