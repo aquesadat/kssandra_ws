@@ -1,8 +1,11 @@
 package com.kssandra.ksd_ws.response;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class IntradayDataResponse {
+public class IntradayDataResponse implements Serializable {
+
+	private static final long serialVersionUID = -4213939737226741515L;
 
 	private String cxCurr;
 

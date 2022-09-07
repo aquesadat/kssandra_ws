@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -35,20 +34,19 @@ public class IntradayDataService {
 
 		IntradayDataResponse response = null;
 
-		CryptoCurrencyDto cxCurrDto = cxCurrDao.findByCode(intraRq.getCxCurr().getValue());
+		CryptoCurrencyDto cxCurrDto = cxCurrDao.findByCode(intraRq.getCxCurr());
 
 		if (cxCurrDto != null) {
 			List<CryptoDataDto> data = cryptoDataDao.findAfterDate(cxCurrDto, LocalDateTime.now().minusDays(1));
 			IntervalEnum interval = IntervalEnum.fromName(intraRq.getInterval());
 
 			response = new IntradayDataResponse();
-			response.setCxCurr(intraRq.getCxCurr().getValue());
-			response.setExCurr(intraRq.getExCurr().getValue());
+			response.setCxCurr(intraRq.getCxCurr());
+			response.setExCurr(intraRq.getExCurr());
 			response.setItems(getItems(data, intraRq.isExtended(), interval));
 
 		} else {
-			throw new KsdServiceException(
-					"Any cxcurrency found in DB for code: ".concat(intraRq.getCxCurr().getValue()));
+			throw new KsdServiceException("Any cxcurrency found in DB for code: ".concat(intraRq.getCxCurr()));
 		}
 
 		return response;

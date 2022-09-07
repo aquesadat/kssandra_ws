@@ -39,7 +39,7 @@ public class IntradayPredictionService {
 	public IntradayPredictionResponse getPrediction(IntradayPredictionRequest intraRq) throws KsdServiceException {
 		IntradayPredictionResponse response = null;
 
-		CryptoCurrencyDto cxCurrDto = cxCurrDao.findByCode(intraRq.getCxCurr().getValue());
+		CryptoCurrencyDto cxCurrDto = cxCurrDao.findByCode(intraRq.getCxCurr());
 
 		if (cxCurrDto != null) {
 			List<PredictionDto> data = predictionDao.findAfterDate(cxCurrDto, LocalDateTime.now(),
@@ -47,13 +47,12 @@ public class IntradayPredictionService {
 			IntervalEnum interval = IntervalEnum.fromName(intraRq.getInterval());
 
 			response = new IntradayPredictionResponse();
-			response.setCxCurr(intraRq.getCxCurr().getValue());
-			response.setExCurr(intraRq.getExCurr().getValue());
+			response.setCxCurr(intraRq.getCxCurr());
+			response.setExCurr(intraRq.getExCurr());
 			response.setItems(getItems(data, interval));
 
 		} else {
-			throw new KsdServiceException(
-					"Any cxcurrency found in DB for code: ".concat(intraRq.getCxCurr().getValue()));
+			throw new KsdServiceException("Any cxcurrency found in DB for code: ".concat(intraRq.getCxCurr()));
 		}
 
 		return response;

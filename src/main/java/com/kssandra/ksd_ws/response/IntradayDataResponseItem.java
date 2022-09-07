@@ -1,9 +1,13 @@
 package com.kssandra.ksd_ws.response;
 
+import java.io.Serializable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class IntradayDataResponseItem {
+public class IntradayDataResponseItem implements Serializable {
+
+	private static final long serialVersionUID = 6130028840719648283L;
 
 	private String dateTime;
 
@@ -64,7 +68,5 @@ public class IntradayDataResponseItem {
 	public void setAvg(Double avg) {
 		this.avg = avg;
 	}
-
-
 
 }
