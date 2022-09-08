@@ -74,7 +74,6 @@ public class LoggingServiceImpl implements LoggingService {
 
 	@Override
 	public void displayResp(HttpServletRequest request, HttpServletResponse response, Object responseBody) {
-		StringBuilder respMessage = new StringBuilder();
 		Map<String, String> headers = getHeaders(response);
 
 		LOG.debug(RS_BEGIN);
@@ -122,11 +121,11 @@ public class LoggingServiceImpl implements LoggingService {
 
 	private static Map<String, String> getHeaders(HttpServletRequest request) {
 
-		Map<String, String> map = new HashMap<String, String>();
+		Map<String, String> map = new HashMap<>();
 
 		Enumeration<String> headerNames = request.getHeaderNames();
 		while (headerNames.hasMoreElements()) {
-			String key = (String) headerNames.nextElement();
+			String key = headerNames.nextElement();
 			String value = request.getHeader(key);
 			map.put(key, value);
 		}

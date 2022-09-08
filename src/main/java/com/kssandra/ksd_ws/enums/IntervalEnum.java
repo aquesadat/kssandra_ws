@@ -6,7 +6,7 @@ import java.util.stream.Stream;
 
 public enum IntervalEnum {
 
-	M15("15m", Arrays.asList(0, 15, 30, 45)), M30("30m", Arrays.asList(0, 30)), M60("60m", Arrays.asList(0));
+	M15("M15", Arrays.asList(0, 15, 30, 45)), M30("M30", Arrays.asList(0, 30)), M60("M60", Arrays.asList(0));
 
 	private String name;
 
