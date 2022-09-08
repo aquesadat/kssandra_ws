@@ -30,8 +30,16 @@ public class IntradayPredictionRequest implements Serializable {
 		return cxCurr;
 	}
 
+	public void setCxCurr(String cxCurr) {
+		this.cxCurr = cxCurr;
+	}
+
 	public String getExCurr() {
 		return exCurr;
+	}
+
+	public void setExCurr(String exCurr) {
+		this.exCurr = exCurr;
 	}
 
 	public String getInterval() {
@@ -41,4 +49,5 @@ public class IntradayPredictionRequest implements Serializable {
 	public void setInterval(String interval) {
 		this.interval = interval;
 	}
+
 }

@@ -26,14 +26,14 @@ public class CustomRestExceptionHandler extends ResponseEntityExceptionHandler {
 
 	@ExceptionHandler(value = { KsdServiceException.class })
 	protected ResponseEntity<Object> handleConflict(KsdServiceException ex, WebRequest request) {
-		LOG.error("Error proccessing request: ", ex.getCause());
+		LOG.error("Error proccessing request:", ex);
 		String bodyOfResponse = "Error proccessing request. Please contact our support team.";
 		return handleExceptionInternal(ex, bodyOfResponse, new HttpHeaders(), HttpStatus.CONFLICT, request);
 	}
 
 	@ExceptionHandler({ Exception.class })
 	public ResponseEntity<Object> handleAll(Exception ex, WebRequest request) {
-		LOG.error("Unexpected error", ex);
+		LOG.error("Unexpected error ", ex);
 		return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error occurred");
 	}
 

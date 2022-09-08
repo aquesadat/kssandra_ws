@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kssandra.ksd_common.dto.CryptoCurrencyDto;
-import com.kssandra.ksd_common.dto.CryptoDataDto;
 import com.kssandra.ksd_common.dto.PredictionDto;
 import com.kssandra.ksd_common.dto.PredictionSuccessDto;
 import com.kssandra.ksd_common.util.DateUtils;
@@ -68,7 +67,7 @@ public class IntradaySimulationService {
 			response = new IntradaySimulationResponse();
 			response.setCxCurr(intraRq.getCxCurr());
 			response.setExCurr(intraRq.getExCurr());
-			Double currVal = getCurrVal(cxCurrDto);
+			Double currVal = cxDataDao.getCurrVal(cxCurrDto);
 			response.setItems(getItems(predictions, interval, intraRq.getAmount(), intraRq.getPurchaseFee(),
 					intraRq.getSaleFee(), intraRq.getDateTime(), currVal));
 
@@ -114,9 +113,4 @@ public class IntradaySimulationService {
 		return item;
 	}
 
-	private Double getCurrVal(CryptoCurrencyDto cxCurrDto) throws KsdServiceException {
-		CryptoDataDto cxDataDto = cxDataDao.getLastInserted(cxCurrDto)
-				.orElseThrow(() -> new KsdServiceException("Any data stored for cxcurr".concat(cxCurrDto.getCode())));
-		return (cxDataDto.getHigh() + cxDataDto.getLow()) / 2;
-	}
 }
