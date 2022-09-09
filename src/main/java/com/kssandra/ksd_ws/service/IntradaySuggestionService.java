@@ -1,26 +1,30 @@
 package com.kssandra.ksd_ws.service;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kssandra.ksd_common.dto.CryptoCurrencyDto;
+import com.kssandra.ksd_common.dto.PredictionDto;
+import com.kssandra.ksd_common.dto.PredictionSuccessDto;
 import com.kssandra.ksd_common.util.PriceUtils;
 import com.kssandra.ksd_persistence.dao.CryptoCurrencyDao;
 import com.kssandra.ksd_persistence.dao.CryptoDataDao;
-import com.kssandra.ksd_ws.enums.IntervalEnum;
+import com.kssandra.ksd_persistence.dao.PredictionDao;
+import com.kssandra.ksd_persistence.dao.PredictionSuccessDao;
 import com.kssandra.ksd_ws.exception.KsdServiceException;
-import com.kssandra.ksd_ws.request.IntradayPredictionRequest;
 import com.kssandra.ksd_ws.request.IntradaySuggestionRequest;
-import com.kssandra.ksd_ws.response.IntradayPredictionResponse;
-import com.kssandra.ksd_ws.response.IntradayPredictionResponseItem;
 import com.kssandra.ksd_ws.response.IntradaySuggestionResponse;
 import com.kssandra.ksd_ws.response.IntradaySuggestionResponseItem;
 
@@ -36,7 +40,15 @@ public class IntradaySuggestionService {
 	CryptoDataDao cxDataDao;
 
 	@Autowired
+	PredictionDao predictionDao;
+
+	@Autowired
+	PredictionSuccessDao predictionSuccessDao;
+
+	@Autowired
 	IntradayPredictionService intradayPredService;
+
+	private static final Logger LOG = LoggerFactory.getLogger(IntradaySuggestionService.class);
 
 	public IntradaySuggestionResponse getSuggestion(@Valid IntradaySuggestionRequest intraRq)
 			throws KsdServiceException {
@@ -44,17 +56,26 @@ public class IntradaySuggestionService {
 		IntradaySuggestionResponse response = new IntradaySuggestionResponse();
 
 		List<CryptoCurrencyDto> cxCurrs = cxCurrDao.getAllActiveCxCurrencies();
-
-		IntradayPredictionRequest intraPredRq = new IntradayPredictionRequest();
-		intraPredRq.setExCurr(intraRq.getExCurr());
-		intraPredRq.setInterval(IntervalEnum.M60.getName());
-
 		Map<Double, IntradaySuggestionResponseItem> suggItems = new TreeMap<>(Collections.reverseOrder());
+
 		for (CryptoCurrencyDto cxCurr : cxCurrs) {
-			intraPredRq.setCxCurr(cxCurr.getCode());
-			IntradayPredictionResponse predictionRs = intradayPredService.getPrediction(intraPredRq);
-			addPrediction(suggItems, predictionRs.getItems().get(predictionRs.getItems().size() - 1),
-					cxDataDao.getCurrVal(cxCurr), cxCurr.getCode());
+
+			List<PredictionDto> predictions = predictionDao.findByDate(cxCurr, LocalDateTime.now().plusDays(1));
+
+			List<PredictionSuccessDto> predSuccess = predictionSuccessDao
+					.findSuccess(predictions.get(0).getCxCurrencyDto());
+
+			Map<LocalDateTime, PredictionDto> bestPredictions = IntradayPredictionService
+					.getBestPredictions(predictions, predSuccess, null);
+
+			Optional<PredictionDto> bestPrediction = bestPredictions.values().stream()
+					.sorted((e1, e2) -> e1.getPredictTime().compareTo(e2.getPredictTime())).findFirst();
+
+			if (bestPrediction.isPresent()) {
+				addPrediction(suggItems, cxCurr, bestPrediction.get());
+			} else {
+				LOG.error("Best prediction not found for cxCurr {}", cxCurr.getCode());
+			}
 		}
 
 		long nResults = intraRq.getNumResult() != null ? intraRq.getNumResult() : MAX_RESULTS;
@@ -72,18 +93,20 @@ public class IntradaySuggestionService {
 		return response;
 	}
 
-	private void addPrediction(Map<Double, IntradaySuggestionResponseItem> predItems,
-			IntradayPredictionResponseItem predItem, Double currVal, String cxCurr) {
+	private void addPrediction(Map<Double, IntradaySuggestionResponseItem> suggItems, CryptoCurrencyDto cxCurr,
+			PredictionDto bestPrediction) {
+		Double currVal = cxDataDao.getCurrVal(cxCurr);
 
 		IntradaySuggestionResponseItem item = new IntradaySuggestionResponseItem();
 
-		Double raise = PriceUtils.roundPrice(100 - (predItem.getExpectedVal() * 100) / currVal);
-		item.setCxCurr(cxCurr);
+		Double raise = PriceUtils.roundPrice(100 - (bestPrediction.getPredictVal() * 100) / currVal);
+		item.setCxCurr(cxCurr.getCode());
 		item.setExpectedRaise(String.valueOf(raise).concat("%"));
-		item.setExpectedVal(predItem.getExpectedVal());
-		item.setSuccess(predItem.getSuccess());
+		item.setExpectedVal(PriceUtils.roundPrice(bestPrediction.getPredictVal()));
+		item.setSuccess(IntradayPredictionService.beautifySuccess(bestPrediction.getSuccess()));
 
-		predItems.put(raise, item);
+		suggItems.put(raise, item);
+
 	}
 
 }
