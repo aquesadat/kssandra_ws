@@ -21,6 +21,9 @@ import java.util.List;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kssandra.ksd_ws.enums.CryptoCurrEnum;
+import com.kssandra.ksd_ws.enums.ExchangeCurrEnum;
+import com.kssandra.ksd_ws.enums.IntervalEnum;
 import com.kssandra.ksd_ws.exception.KsdServiceException;
 import com.kssandra.ksd_ws.request.IntradayDataRequest;
 import com.kssandra.ksd_ws.response.IntradayDataResponse;
@@ -43,6 +46,8 @@ class CryptoDataControllerTest {
 	@MockBean
 	IntradayDataService intradayDataService;
 
+	private static final String urlEndpoint = "/api/v1/intraday/data";
+
 	/**
 	 * Different type of errors validating the request
 	 * 
@@ -55,46 +60,47 @@ class CryptoDataControllerTest {
 
 		// Bad Request - Malformed request
 		request = "";
-		mvc.perform(post("/api/v1/intraday/data").content(request).contentType(MediaType.APPLICATION_JSON))
+		mvc.perform(post(urlEndpoint).content(request).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest());
 
 		// Bad Request - CxCurr
-		request = getMockRequest(null, "EUR", false, "M15");
-		mvc.perform(post("/api/v1/intraday/data").content(request).contentType(MediaType.APPLICATION_JSON))
+		request = getMockRequest(null, ExchangeCurrEnum.EUR.getValue(), false, IntervalEnum.M15.getName());
+		mvc.perform(post(urlEndpoint).content(request).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest()).andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.message").value("cxCurr - Missing field value"));
 
-		request = getMockRequest("XXX", "EUR", false, "M15");
-		mvc.perform(post("/api/v1/intraday/data").content(request).contentType(MediaType.APPLICATION_JSON))
+		request = getMockRequest("XXX", ExchangeCurrEnum.EUR.getValue(), false, IntervalEnum.M15.getName());
+		mvc.perform(post(urlEndpoint).content(request).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest()).andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.message").value("cxCurr - Invalid field value"));
 
 		// Bad Request - exCurr
-		request = getMockRequest("ADA", null, false, "M15");
-		mvc.perform(post("/api/v1/intraday/data").content(request).contentType(MediaType.APPLICATION_JSON))
+		request = getMockRequest(CryptoCurrEnum.ADA.getValue(), null, false, IntervalEnum.M15.getName());
+		mvc.perform(post(urlEndpoint).content(request).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest()).andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.message").value("exCurr - Missing field value"));
 
-		request = getMockRequest("ADA", "XXX", false, "M15");
-		mvc.perform(post("/api/v1/intraday/data").content(request).contentType(MediaType.APPLICATION_JSON))
+		request = getMockRequest(CryptoCurrEnum.ADA.getValue(), "XXX", false, IntervalEnum.M15.getName());
+		mvc.perform(post(urlEndpoint).content(request).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest()).andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.message").value("exCurr - Invalid field value"));
 
 		// Bad Request - Interval
-		request = getMockRequest("ADA", "EUR", false, null);
-		mvc.perform(post("/api/v1/intraday/data").content(request).contentType(MediaType.APPLICATION_JSON))
+		request = getMockRequest(CryptoCurrEnum.ADA.getValue(), ExchangeCurrEnum.EUR.getValue(), false, null);
+		mvc.perform(post(urlEndpoint).content(request).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest()).andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.message").value("interval - Missing field value"));
 
-		request = getMockRequest("ADA", "EUR", false, "XXX");
-		mvc.perform(post("/api/v1/intraday/data").content(request).contentType(MediaType.APPLICATION_JSON))
+		request = getMockRequest(CryptoCurrEnum.ADA.getValue(), ExchangeCurrEnum.EUR.getValue(), false, "XXX");
+		mvc.perform(post(urlEndpoint).content(request).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest()).andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.message").value("interval - Invalid field value"));
 
 		// Conflict - Custom Exception
-		request = getMockRequest("ADA", "EUR", false, "M15");
+		request = getMockRequest(CryptoCurrEnum.ADA.getValue(), ExchangeCurrEnum.EUR.getValue(), false,
+				IntervalEnum.M15.getName());
 		when(intradayDataService.getData(any())).thenThrow(KsdServiceException.class);
-		mvc.perform(post("/api/v1/intraday/data").content(request).contentType(MediaType.APPLICATION_JSON))
+		mvc.perform(post(urlEndpoint).content(request).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isConflict());
 	}
 
@@ -108,12 +114,12 @@ class CryptoDataControllerTest {
 
 		String request = null;
 
-		// Custom Exception
-		request = getMockRequest("ADA", "EUR", false, "M15");
+		request = getMockRequest(CryptoCurrEnum.ADA.getValue(), ExchangeCurrEnum.EUR.getValue(), false,
+				IntervalEnum.M15.getName());
 		IntradayDataResponse response = getMockResponse();
 		when(intradayDataService.getData(any())).thenReturn(response);
 
-		mvc.perform(post("/api/v1/intraday/data").content(request).contentType(MediaType.APPLICATION_JSON))
+		mvc.perform(post(urlEndpoint).content(request).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.cxCurr").value("ADA")).andExpect(jsonPath("$.exCurr").value("EUR"))
 				.andExpect(jsonPath("$.items").exists()).andExpect(jsonPath("$.items").isArray());
@@ -121,8 +127,8 @@ class CryptoDataControllerTest {
 
 	private IntradayDataResponse getMockResponse() {
 		IntradayDataResponse response = new IntradayDataResponse();
-		response.setCxCurr("ADA");
-		response.setExCurr("EUR");
+		response.setCxCurr(CryptoCurrEnum.ADA.getValue());
+		response.setExCurr(ExchangeCurrEnum.EUR.getValue());
 		List<IntradayDataResponseItem> items = new ArrayList<>();
 		IntradayDataResponseItem item = new IntradayDataResponseItem();
 		item.setHigh(4.58);

@@ -58,7 +58,7 @@ class IntradayDataServiceTest {
 		assertThrows(KsdServiceException.class,
 				() -> indradayDataService.getData(buildIntraRq("XXX", null, false, null)));
 
-		// Any price data stored in DB for the crypto currency
+		// No price data stored in DB for the crypto currency
 		CryptoCurrencyDto cxCurr = buildCxCurr("AAA");
 		when(cxCurrDao.findByCode("AAA")).thenReturn(cxCurr);
 		when(cryptoDataDao.findAfterDate(eq(cxCurr), any())).thenReturn(new ArrayList<CryptoDataDto>());
