@@ -24,6 +24,7 @@ import com.kssandra.ksd_ws.exception.KsdServiceException;
 import com.kssandra.ksd_ws.request.IntradaySimulationRequest;
 import com.kssandra.ksd_ws.response.IntradaySimulationResponse;
 import com.kssandra.ksd_ws.response.IntradaySimulationResponseItem;
+import com.kssandra.ksd_ws.util.PredictionUtil;
 
 @Service
 public class IntradaySimulationService {
@@ -87,8 +88,8 @@ public class IntradaySimulationService {
 			List<PredictionSuccessDto> predSuccess = predictionSuccessDao
 					.findSuccess(predictions.get(0).getCxCurrencyDto());
 
-			Map<LocalDateTime, PredictionDto> bestPredictions = IntradayPredictionService
-					.getBestPredictions(predictions, predSuccess, interval);
+			Map<LocalDateTime, PredictionDto> bestPredictions = PredictionUtil.getBestPredictions(predictions,
+					predSuccess, interval);
 
 			bestPredictions.values().stream().sorted((e1, e2) -> e1.getPredictTime().compareTo(e2.getPredictTime()))
 					.forEach(pred -> items.add(predToItem(pred, amount, purchaseFee, saleFee, dateTime, currVal)));
@@ -103,7 +104,7 @@ public class IntradaySimulationService {
 
 		item.setDateTime(dateTime != null ? dateTime
 				: dto.getPredictTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
-		item.setSuccess(IntradayPredictionService.beautifySuccess(dto.getSuccess()));
+		item.setSuccess(PredictionUtil.beautifySuccess(dto.getSuccess()));
 		item.setExpectedVal(PriceUtils.roundPrice(amount / currVal * dto.getPredictVal()));
 
 		saleFee = (saleFee == null || saleFee == 0) ? 1 : (100 - saleFee) / 100;

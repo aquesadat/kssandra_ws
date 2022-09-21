@@ -27,6 +27,7 @@ import com.kssandra.ksd_ws.exception.KsdServiceException;
 import com.kssandra.ksd_ws.request.IntradaySuggestionRequest;
 import com.kssandra.ksd_ws.response.IntradaySuggestionResponse;
 import com.kssandra.ksd_ws.response.IntradaySuggestionResponseItem;
+import com.kssandra.ksd_ws.util.PredictionUtil;
 
 @Service
 public class IntradaySuggestionService {
@@ -65,8 +66,8 @@ public class IntradaySuggestionService {
 			List<PredictionSuccessDto> predSuccess = predictionSuccessDao
 					.findSuccess(predictions.get(0).getCxCurrencyDto());
 
-			Map<LocalDateTime, PredictionDto> bestPredictions = IntradayPredictionService
-					.getBestPredictions(predictions, predSuccess, null);
+			Map<LocalDateTime, PredictionDto> bestPredictions = PredictionUtil.getBestPredictions(predictions,
+					predSuccess, null);
 
 			Optional<PredictionDto> bestPrediction = bestPredictions.values().stream()
 					.sorted((e1, e2) -> e1.getPredictTime().compareTo(e2.getPredictTime())).findFirst();
@@ -103,7 +104,7 @@ public class IntradaySuggestionService {
 		item.setCxCurr(cxCurr.getCode());
 		item.setExpectedRaise(String.valueOf(raise).concat("%"));
 		item.setExpectedVal(PriceUtils.roundPrice(bestPrediction.getPredictVal()));
-		item.setSuccess(IntradayPredictionService.beautifySuccess(bestPrediction.getSuccess()));
+		item.setSuccess(PredictionUtil.beautifySuccess(bestPrediction.getSuccess()));
 
 		suggItems.put(raise, item);
 
