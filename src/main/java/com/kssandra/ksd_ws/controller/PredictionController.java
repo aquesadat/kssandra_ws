@@ -18,23 +18,46 @@ import com.kssandra.ksd_ws.request.IntradayPredictionRequest;
 import com.kssandra.ksd_ws.response.IntradayPredictionResponse;
 import com.kssandra.ksd_ws.service.IntradayPredictionService;
 
+/**
+ * Controller to make price predictions for a specified cryptocurrency
+ *
+ * @author aquesada
+ */
 @RestController
 @RequestMapping("/api/v1")
 public class PredictionController {
 
+	/** The intraday prediction service. */
 	@Autowired
 	IntradayPredictionService intradayPredictionService;
 
+	/** The Constant LOG. */
 	private static final Logger LOG = LoggerFactory.getLogger(PredictionController.class);
 
+	/**
+	 * Given a cryptocurrency, this POST method returns its price prediction for the
+	 * next 24h
+	 *
+	 * @param intraRq  the endpoint request
+	 * @param request  the http request
+	 * @param response the hhtp response
+	 * @return the endpoint response
+	 * @throws KsdServiceException the custom exception
+	 */
 	@PostMapping(value = "/intraday/prediction", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	public IntradayPredictionResponse getIntraDayData(@Valid @RequestBody IntradayPredictionRequest intraRq,
 			HttpServletRequest request, HttpServletResponse response) throws KsdServiceException {
 
+		long beginTime = System.currentTimeMillis();
 		LOG.info("Begin intraday prediction");
 
 		IntradayPredictionResponse intraRs = intradayPredictionService.getPrediction(intraRq);
+
+		// Sets status as OK (200). Any other case will be captured in
+		// CustomRestExceptionHandler
 		response.setStatus(HttpServletResponse.SC_OK);
+
+		LOG.info("End intraday prediction. Elapsed time: {} ms", System.currentTimeMillis() - beginTime);
 
 		return intraRs;
 

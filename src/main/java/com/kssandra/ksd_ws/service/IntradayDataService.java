@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.kssandra.ksd_common.dto.CryptoCurrencyDto;
 import com.kssandra.ksd_common.dto.CryptoDataDto;
-
+import com.kssandra.ksd_common.util.DateUtils;
 import com.kssandra.ksd_common.util.PriceUtils;
 import com.kssandra.ksd_persistence.dao.CryptoCurrencyDao;
 import com.kssandra.ksd_persistence.dao.CryptoDataDao;
@@ -89,7 +89,7 @@ public class IntradayDataService {
 	}
 
 	/**
-	 * Build the respose item.
+	 * Builds the respose item.
 	 *
 	 * @param dto      dto price data
 	 * @param extended extended price info
@@ -112,7 +112,7 @@ public class IntradayDataService {
 			item.setOpen(null);
 		}
 
-		item.setDateTime(dto.getReadTime().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
+		item.setDateTime(dto.getReadTime().format(DateTimeFormatter.ofPattern(DateUtils.FORMAT_DDMMYYYY_HHMMSS)));
 
 		return item;
 	}

@@ -19,8 +19,7 @@ import com.kssandra.ksd_ws.response.IntradayDataResponse;
 import com.kssandra.ksd_ws.service.IntradayDataService;
 
 /**
- * Controller to obtain historic intra-day data from different
- * crypto-currencies.
+ * Controller to get historic intra-day data from different crypto-currencies.
  * 
  * @author aquesada
  *
