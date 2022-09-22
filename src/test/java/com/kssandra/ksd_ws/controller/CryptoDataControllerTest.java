@@ -49,9 +49,8 @@ class CryptoDataControllerTest {
 	private static final String urlEndpoint = "/api/v1/intraday/data";
 
 	/**
-	 * Different type of errors validating the request
-	 * 
-	 * @throws Exception
+	 * Test method for getIntraDayData with any kind of KO response
+	 * {@link com.kssandra.ksd_ws.controller.CryptoDataController#getIntraDayData(com.kssandra.ksd_ws.request.IntradayDataRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
 	 */
 	@Test
 	void testGetIntraDayDataKO() throws Exception {
@@ -105,16 +104,13 @@ class CryptoDataControllerTest {
 	}
 
 	/**
-	 * Status OK (200) in case of validate the request
-	 * 
-	 * @throws Exception
+	 * Test method for getIntraDayData with OK response
+	 * {@link com.kssandra.ksd_ws.controller.CryptoDataController#getIntraDayData(com.kssandra.ksd_ws.request.IntradayDataRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
 	 */
 	@Test
 	void testGetIntraDayDataOK() throws Exception {
 
-		String request = null;
-
-		request = getMockRequest(CryptoCurrEnum.ADA.getValue(), ExchangeCurrEnum.EUR.getValue(), false,
+		String request = getMockRequest(CryptoCurrEnum.ADA.getValue(), ExchangeCurrEnum.EUR.getValue(), false,
 				IntervalEnum.M15.getName());
 		IntradayDataResponse response = getMockResponse();
 		when(intradayDataService.getData(any())).thenReturn(response);
