@@ -20,6 +20,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 
 import com.kssandra.ksd_common.dto.CryptoCurrencyDto;
 import com.kssandra.ksd_common.dto.CryptoDataDto;
+import com.kssandra.ksd_common.util.DateUtils;
 import com.kssandra.ksd_persistence.dao.CryptoCurrencyDao;
 import com.kssandra.ksd_persistence.dao.CryptoDataDao;
 import com.kssandra.ksd_ws.enums.IntervalEnum;
@@ -29,6 +30,8 @@ import com.kssandra.ksd_ws.response.IntradayDataResponse;
 import com.kssandra.ksd_ws.response.IntradayDataResponseItem;
 
 /**
+ * Test class for IntradayDataService
+ * 
  * @author aquesada
  *
  */
@@ -59,7 +62,7 @@ class IntradayDataServiceTest {
 				() -> indradayDataService.getData(buildIntraRq("XXX", null, false, null)));
 
 		// No price data stored in DB for the crypto currency
-		CryptoCurrencyDto cxCurr = buildCxCurr("AAA");
+		CryptoCurrencyDto cxCurr = new CryptoCurrencyDto("AAA");
 		when(cxCurrDao.findByCode("AAA")).thenReturn(cxCurr);
 		when(cryptoDataDao.findAfterDate(eq(cxCurr), any())).thenReturn(new ArrayList<CryptoDataDto>());
 		IntradayDataResponse response = indradayDataService.getData(buildIntraRq("AAA", "EUR", false, "M15"));
@@ -68,7 +71,7 @@ class IntradayDataServiceTest {
 		assertTrue(response.getItems().isEmpty());
 
 		// The crypto currency has price data stored in DB
-		cxCurr = buildCxCurr("BBB");
+		cxCurr = new CryptoCurrencyDto("BBB");
 		String rqInterval = "M15";
 		when(cxCurrDao.findByCode("BBB")).thenReturn(cxCurr);
 		when(cryptoDataDao.findAfterDate(eq(cxCurr), any())).thenReturn(buildItemList());
@@ -83,7 +86,7 @@ class IntradayDataServiceTest {
 			// Minutes match interval values
 			assertNotNull(item.getDateTime());
 			LocalDateTime itemDateTime = LocalDateTime.parse(item.getDateTime(),
-					DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+					DateTimeFormatter.ofPattern(DateUtils.FORMAT_DDMMYYYY_HHMMSS));
 			assertTrue(interval.getValues().contains(itemDateTime.getMinute()));
 
 			// Not extended -> Only average
@@ -130,10 +133,6 @@ class IntradayDataServiceTest {
 		}
 
 		return items;
-	}
-
-	private CryptoCurrencyDto buildCxCurr(String cxCode) {
-		return new CryptoCurrencyDto(cxCode);
 	}
 
 	private IntradayDataRequest buildIntraRq(String cxCurr, String exCurr, boolean extended, String interval) {
