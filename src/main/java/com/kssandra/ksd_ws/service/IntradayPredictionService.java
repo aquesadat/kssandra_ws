@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -44,6 +46,9 @@ public class IntradayPredictionService {
 	@Autowired
 	CryptoCurrencyDao cxCurrDao;
 
+	/** The Constant LOG. */
+	private static final Logger LOG = LoggerFactory.getLogger(IntradayPredictionService.class);
+
 	/**
 	 * Gets the prediction.
 	 *
@@ -54,12 +59,16 @@ public class IntradayPredictionService {
 	public IntradayPredictionResponse getPrediction(IntradayPredictionRequest intraRq) throws KsdServiceException {
 		IntradayPredictionResponse response = null;
 
+		LOG.debug("Getting predictions for cx currency {}", intraRq.getCxCurr());
 		CryptoCurrencyDto cxCurrDto = cxCurrDao.findByCode(intraRq.getCxCurr());
 
 		if (cxCurrDto != null) {
+
 			// Gets future price predictions for the next 24h
 			List<PredictionDto> predictions = predictionDao.findAfterDate(cxCurrDto, LocalDateTime.now(),
 					LocalDateTime.now().plusDays(1));
+			LOG.info("{} predictions found", predictions.size());
+
 			IntervalEnum interval = IntervalEnum.fromName(intraRq.getInterval());
 
 			response = new IntradayPredictionResponse();
@@ -68,6 +77,7 @@ public class IntradayPredictionService {
 			response.setItems(getItems(predictions, interval, cxCurrDto));
 
 		} else {
+			LOG.error("Cx currency not found");
 			throw new KsdServiceException("Any cxcurrency found in DB for code: ".concat(intraRq.getCxCurr()));
 		}
 
@@ -90,15 +100,19 @@ public class IntradayPredictionService {
 			// Gets (from a view) all sample-advance combinations and its success (data from
 			// past predictions already evaluated)
 			List<PredictionSuccessDto> predSuccess = predictionSuccessDao.findSuccess(cxCurrDto);
+			LOG.debug("{} success predictions found", predSuccess.size());
 
 			// According to the past evaluated predictions (predSuccess), get the best
 			// future prediction (sample-advance combination) for every time in the next 24h
 			Map<LocalDateTime, PredictionDto> bestPredictions = PredictionUtil.getBestPredictions(predictions,
 					predSuccess, interval);
+			LOG.debug("{} best predictions found", bestPredictions.size());
 
 			// Sorts predictions by time and builds the final response item
 			bestPredictions.values().stream().sorted((e1, e2) -> e1.getPredictTime().compareTo(e2.getPredictTime()))
 					.forEach(pred -> items.add(predToItem(pred)));
+		} else {
+			LOG.warn("Any prediction was found");
 		}
 
 		return items;

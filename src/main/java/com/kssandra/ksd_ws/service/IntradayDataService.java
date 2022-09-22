@@ -5,6 +5,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,7 +16,6 @@ import com.kssandra.ksd_common.util.DateUtils;
 import com.kssandra.ksd_common.util.PriceUtils;
 import com.kssandra.ksd_persistence.dao.CryptoCurrencyDao;
 import com.kssandra.ksd_persistence.dao.CryptoDataDao;
-
 import com.kssandra.ksd_ws.enums.IntervalEnum;
 import com.kssandra.ksd_ws.exception.KsdServiceException;
 import com.kssandra.ksd_ws.request.IntradayDataRequest;
@@ -37,6 +38,9 @@ public class IntradayDataService {
 	@Autowired
 	CryptoCurrencyDao cxCurrDao;
 
+	/** The Constant LOG. */
+	private static final Logger LOG = LoggerFactory.getLogger(IntradayDataService.class);
+
 	/**
 	 * Gets the last 24h price data of the specified crypto currency.
 	 *
@@ -46,10 +50,13 @@ public class IntradayDataService {
 	 */
 	public IntradayDataResponse getData(IntradayDataRequest intraRq) throws KsdServiceException {
 
+		LOG.debug("Getting data for cx currency {}", intraRq.getCxCurr());
 		CryptoCurrencyDto cxCurrDto = cxCurrDao.findByCode(intraRq.getCxCurr());
 
 		if (cxCurrDto != null) {
 			List<CryptoDataDto> data = cryptoDataDao.findAfterDate(cxCurrDto, LocalDateTime.now().minusDays(1));
+			LOG.debug("{} items found", data.size());
+
 			IntervalEnum interval = IntervalEnum.fromName(intraRq.getInterval());
 
 			IntradayDataResponse response = new IntradayDataResponse();
@@ -60,6 +67,7 @@ public class IntradayDataService {
 			return response;
 
 		} else {
+			LOG.error("Cx currency not found");
 			throw new KsdServiceException("Any cxcurrency found in DB for code: ".concat(intraRq.getCxCurr()));
 		}
 
@@ -85,6 +93,7 @@ public class IntradayDataService {
 				.sorted((e1, e2) -> e2.getReadTime().compareTo(e1.getReadTime()))
 				.forEach(dto -> items.add(getIntraRsItem(dto, extended)));
 
+		LOG.debug("{} items match minutes of interval", items.size());
 		return items;
 	}
 
