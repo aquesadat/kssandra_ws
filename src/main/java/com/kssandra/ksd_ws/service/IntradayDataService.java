@@ -68,7 +68,7 @@ public class IntradayDataService {
 
 		} else {
 			LOG.error("Cx currency not found");
-			throw new KsdServiceException("Any cxcurrency found in DB for code: ".concat(intraRq.getCxCurr()));
+			throw new KsdServiceException("No cxcurrency found in DB for code: ".concat(intraRq.getCxCurr()));
 		}
 
 	}

@@ -3,11 +3,12 @@ package com.kssandra.ksd_ws.controller;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,60 +23,55 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
-import com.kssandra.ksd_persistence.domain.CryptoData;
+import com.kssandra.ksd_common.util.DateUtils;
+import com.kssandra.ksd_persistence.domain.Prediction;
 import com.kssandra.ksd_ws.enums.CryptoCurrEnum;
 import com.kssandra.ksd_ws.enums.ExchangeCurrEnum;
 import com.kssandra.ksd_ws.enums.IntervalEnum;
-import com.kssandra.ksd_ws.repository.CryptoDataTestH2Repository;
-import com.kssandra.ksd_ws.request.IntradayDataRequest;
-import com.kssandra.ksd_ws.response.IntradayDataResponse;
-import com.kssandra.ksd_ws.response.IntradayDataResponseItem;
+import com.kssandra.ksd_ws.repository.CryptoPredictionTestH2Repository;
+import com.kssandra.ksd_ws.request.IntradayPredictionRequest;
+
+import com.kssandra.ksd_ws.response.IntradayPredictionResponse;
+import com.kssandra.ksd_ws.response.IntradayPredictionResponseItem;
 
 /**
- * Integration test class for CryptoDataController.
- *
+ * Integration test class for PredictionController
+ * 
  * @author aquesada
+ *
  */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestPropertySource(locations = "classpath:application-integrationtest.properties")
 @AutoConfigureMockMvc(addFilters = false)
-class CryptoDataControllerIntegrationTest {
+class PredictionControllerIntegrationTest {
 
-	/** The test client. */
 	@Autowired
 	private WebTestClient testClient;
 
 	/** The cx data test repository. */
 	@Autowired
-	private CryptoDataTestH2Repository cxDataTestRepository;
+	private CryptoPredictionTestH2Repository cxPredictTestRepository;
 
-	/** The Constant urlEndpoint. */
-	private static final String urlEndpoint = "/api/v1/intraday/data";
+	private static final String urlEndpoint = "/api/v1/intraday/prediction";
 
-	/**
-	 * Update data.
-	 */
 	@BeforeEach
 	private void updateData() {
-		List<CryptoData> cxData = cxDataTestRepository.findAll();
+		List<Prediction> cxPredict = cxPredictTestRepository.findAll();
 
 		// Update readtime to current date for all records
-		cxData = cxData.stream().map(elem -> updateReadTime(elem)).collect(Collectors.toList());
+		cxPredict = cxPredict.stream().map(elem -> updateReadTime(elem)).collect(Collectors.toList());
 
-		cxDataTestRepository.saveAll(cxData);
+		cxPredictTestRepository.saveAll(cxPredict);
 	}
 
 	/**
 	 * Test method for getIntraDayData with any kind of KO response
-	 *
-	 * @throws Exception the exception
 	 */
 	@Test
-	void testGetIntraDayDataKO() throws Exception {
+	void testGetIntraDayDataKO() {
 
-		IntradayDataRequest intraRq = new IntradayDataRequest();
+		IntradayPredictionRequest intraRq = new IntradayPredictionRequest();
 		intraRq.setExCurr(ExchangeCurrEnum.EUR.getValue());
-		intraRq.setExtended(false);
 		intraRq.setInterval(IntervalEnum.M15.getName());
 
 		// Bad Request - CxCurr
@@ -112,7 +108,6 @@ class CryptoDataControllerIntegrationTest {
 		intraRq.setCxCurr(CryptoCurrEnum.ETH.getValue());
 		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
 				.expectStatus().isEqualTo(HttpStatus.CONFLICT);
-
 	}
 
 	/**
@@ -123,85 +118,63 @@ class CryptoDataControllerIntegrationTest {
 	@Test
 	void testGetIntraDayDataOK() throws Exception {
 
-		IntradayDataRequest intraRq = new IntradayDataRequest();
+		IntradayPredictionRequest intraRq = new IntradayPredictionRequest();
 		intraRq.setCxCurr(CryptoCurrEnum.BTC.getValue());
 		intraRq.setExCurr(ExchangeCurrEnum.EUR.getValue());
-		intraRq.setExtended(false);
 		intraRq.setInterval(IntervalEnum.M15.getName());
 
-		// No price data stored in DB for the crypto currency
+		// No prediction data stored in DB for the crypto currency
 		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
 				.expectStatus().isOk().expectBody().jsonPath("cxCurr").isEqualTo(CryptoCurrEnum.BTC.getValue())
 				.jsonPath("exCurr").isEqualTo(ExchangeCurrEnum.EUR.getValue()).jsonPath("items").isEmpty();
 
-		// The crypto currency has price data stored in DB
+		// The crypto currency has prediction data stored in DB
 		intraRq.setCxCurr(CryptoCurrEnum.ADA.getValue());
 
 		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
-				.expectStatus().isOk().expectBody(IntradayDataResponse.class).consumeWith(result -> {
-					IntradayDataResponse response = result.getResponseBody();
+				.expectStatus().isOk().expectBody(IntradayPredictionResponse.class).consumeWith(result -> {
+					IntradayPredictionResponse response = result.getResponseBody();
 					assertEquals(CryptoCurrEnum.ADA.getValue(), response.getCxCurr());
 					assertEquals(ExchangeCurrEnum.EUR.getValue(), response.getExCurr());
 
-					List<IntradayDataResponseItem> items = response.getItems();
+					List<IntradayPredictionResponseItem> items = response.getItems();
 					assertNotNull(items);
 					assertFalse(items.isEmpty());
-					for (IntradayDataResponseItem item : items) {
+
+					IntervalEnum interval = IntervalEnum.valueOf(IntervalEnum.M15.getName());
+
+					Iterator<IntradayPredictionResponseItem> iter = items.iterator();
+					IntradayPredictionResponseItem current, previous = iter.next();
+
+					while (iter.hasNext()) {
+						current = iter.next();
+
 						// Minutes match interval values
-						assertNotNull(item.getDateTime());
-						LocalDateTime itemDateTime = LocalDateTime.parse(item.getDateTime(),
-								DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
-						assertTrue(IntervalEnum.M15.getValues().contains(itemDateTime.getMinute()));
+						LocalDateTime prevDateTime = LocalDateTime.parse(previous.getDateTime(),
+								DateTimeFormatter.ofPattern(DateUtils.FORMAT_DDMMYYYY_HHMMSS));
+						assertNotNull(current.getDateTime());
+						assertTrue(interval.getValues().contains(prevDateTime.getMinute()));
+						assertTrue(previous.getSuccess().equals("N/A") || previous.getSuccess().contains("%"));
 
-						// Not extended -> Only average
-						assertNull(item.getClose());
-						assertNull(item.getHigh());
-						assertNull(item.getLow());
-						assertNull(item.getOpen());
-						assertNotNull(item.getAvg());
-					}
-				});
+						// Items are sorted by date ascending
+						LocalDateTime currDateTime = LocalDateTime.parse(current.getDateTime(),
+								DateTimeFormatter.ofPattern(DateUtils.FORMAT_DDMMYYYY_HHMMSS));
 
-		// Extended response
-		intraRq.setExtended(true);
-		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
-				.expectStatus().isOk().expectBody(IntradayDataResponse.class).consumeWith(result -> {
-					IntradayDataResponse response = result.getResponseBody();
-					List<IntradayDataResponseItem> items = response.getItems();
-					assertNotNull(items);
-					assertFalse(items.isEmpty());
-					for (IntradayDataResponseItem item : items) {
-						// Extended -> open, close, high and low
-						assertNotNull(item.getClose());
-						assertNotNull(item.getHigh());
-						assertNotNull(item.getLow());
-						assertNotNull(item.getOpen());
-
-						assertNull(item.getAvg());
-						assertNotNull(item.getDateTime());
+						assertTrue(currDateTime.isAfter(prevDateTime));
+						previous = current;
 					}
 				});
 
 	}
 
-	/**
-	 * Updates the day, month and year of the readTime to the current date.
-	 *
-	 * @param cxData the cx data
-	 * @return cryptoData with updated readTime date
-	 */
-	private CryptoData updateReadTime(CryptoData cxData) {
+	private Prediction updateReadTime(Prediction pred) {
+		LocalDateTime currTime = pred.getCurrTime();
+		long diffHours = ChronoUnit.HOURS.between(currTime, LocalDateTime.now());
 
-		LocalDateTime dateTime = cxData.getReadTime();
-		LocalDateTime currTime = LocalDateTime.now();
+		pred.setCurrTime(LocalDateTime.now());
+		pred.setPredictTime(pred.getPredictTime().plusHours(diffHours));
 
-		dateTime = dateTime.withMonth(currTime.getMonth().getValue());
-		dateTime = dateTime.withDayOfMonth(currTime.getDayOfMonth());
-		dateTime = dateTime.withYear(currTime.getYear());
-
-		cxData.setReadTime(dateTime);
-
-		return cxData;
+		return pred;
 	}
 
 }
