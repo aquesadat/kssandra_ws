@@ -1,6 +1,3 @@
-/**
- * 
- */
 package com.kssandra.ksd_ws.controller;
 
 import static org.mockito.ArgumentMatchers.any;

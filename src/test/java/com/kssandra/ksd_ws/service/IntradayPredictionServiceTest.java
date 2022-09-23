@@ -84,7 +84,7 @@ class IntradayPredictionServiceTest {
 		List<PredictionDto> predictions = buildItemList();
 		when(predictionDao.findAfterDate(eq(cxCurr), any(), any())).thenReturn(predictions);
 
-		// Any past predictions evaluated is stored in DB for the crypto currency
+		// No evaluated past predictions is stored in DB for the crypto currency
 		when(predictionSuccessDao.findSuccess(cxCurr)).thenReturn(new ArrayList<PredictionSuccessDto>());
 		String rqInterval = "M15";
 		response = intradayPredictionService.getPrediction(buildIntraRq("BBB", "EUR", rqInterval));
@@ -124,7 +124,7 @@ class IntradayPredictionServiceTest {
 			assertNotNull(current.getDateTime());
 			assertTrue(interval.getValues().contains(prevDateTime.getMinute()));
 
-			// Itemas are sorted by date ascending
+			// Items are sorted by date ascending
 			LocalDateTime currDateTime = LocalDateTime.parse(current.getDateTime(),
 					DateTimeFormatter.ofPattern(DateUtils.FORMAT_DDMMYYYY_HHMMSS));
 

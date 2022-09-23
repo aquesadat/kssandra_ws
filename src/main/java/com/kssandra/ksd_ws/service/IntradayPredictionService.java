@@ -78,7 +78,7 @@ public class IntradayPredictionService {
 
 		} else {
 			LOG.error("Cx currency not found");
-			throw new KsdServiceException("Any cxcurrency found in DB for code: ".concat(intraRq.getCxCurr()));
+			throw new KsdServiceException("No cxcurrency found in DB for code: ".concat(intraRq.getCxCurr()));
 		}
 
 		return response;
@@ -112,7 +112,7 @@ public class IntradayPredictionService {
 			bestPredictions.values().stream().sorted((e1, e2) -> e1.getPredictTime().compareTo(e2.getPredictTime()))
 					.forEach(pred -> items.add(predToItem(pred)));
 		} else {
-			LOG.warn("Any prediction was found");
+			LOG.warn("No prediction was found");
 		}
 
 		return items;
