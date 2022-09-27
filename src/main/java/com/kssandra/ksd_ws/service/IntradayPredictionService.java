@@ -52,7 +52,7 @@ public class IntradayPredictionService {
 	/**
 	 * Gets the prediction.
 	 *
-	 * @param intraRq the intra rq
+	 * @param intraRq the request
 	 * @return the prediction
 	 * @throws KsdServiceException the ksd service exception
 	 */
@@ -65,7 +65,7 @@ public class IntradayPredictionService {
 		if (cxCurrDto != null) {
 
 			// Gets future price predictions for the next 24h
-			List<PredictionDto> predictions = predictionDao.findAfterDate(cxCurrDto, LocalDateTime.now(),
+			List<PredictionDto> predictions = predictionDao.findBetweenDates(cxCurrDto, LocalDateTime.now(),
 					LocalDateTime.now().plusDays(1));
 			LOG.info("{} predictions found", predictions.size());
 
