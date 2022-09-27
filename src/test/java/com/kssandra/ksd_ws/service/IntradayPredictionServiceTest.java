@@ -71,7 +71,7 @@ class IntradayPredictionServiceTest {
 		// No prediction data stored in DB for the crypto currency
 		CryptoCurrencyDto cxCurr = new CryptoCurrencyDto("AAA");
 		when(cxCurrDao.findByCode("AAA")).thenReturn(cxCurr);
-		when(predictionDao.findAfterDate(eq(cxCurr), any(), any())).thenReturn(new ArrayList<PredictionDto>());
+		when(predictionDao.findBetweenDates(eq(cxCurr), any(), any())).thenReturn(new ArrayList<PredictionDto>());
 		IntradayPredictionResponse response = intradayPredictionService
 				.getPrediction(buildIntraRq("AAA", "EUR", "M15"));
 		assertEquals("AAA", response.getCxCurr());
@@ -82,7 +82,7 @@ class IntradayPredictionServiceTest {
 		cxCurr = new CryptoCurrencyDto("BBB");
 		when(cxCurrDao.findByCode("BBB")).thenReturn(cxCurr);
 		List<PredictionDto> predictions = buildItemList();
-		when(predictionDao.findAfterDate(eq(cxCurr), any(), any())).thenReturn(predictions);
+		when(predictionDao.findBetweenDates(eq(cxCurr), any(), any())).thenReturn(predictions);
 
 		// No evaluated past predictions is stored in DB for the crypto currency
 		when(predictionSuccessDao.findSuccess(cxCurr)).thenReturn(new ArrayList<PredictionSuccessDto>());
