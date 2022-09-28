@@ -150,13 +150,13 @@ class IntradaySimulationServiceTest {
 
 			// Minutes match interval values
 			LocalDateTime prevDateTime = LocalDateTime.parse(previous.getDateTime(),
-					DateTimeFormatter.ofPattern(DateUtils.FORMAT_DDMMYYYY_HHMMSS));
+					DateTimeFormatter.ofPattern(DateUtils.FORMAT_DDMMYYYY_HHMM_2));
 			assertNotNull(current.getDateTime());
 			assertTrue(interval.getValues().contains(prevDateTime.getMinute()));
 
 			// Items are sorted by date ascending
 			LocalDateTime currDateTime = LocalDateTime.parse(current.getDateTime(),
-					DateTimeFormatter.ofPattern(DateUtils.FORMAT_DDMMYYYY_HHMMSS));
+					DateTimeFormatter.ofPattern(DateUtils.FORMAT_DDMMYYYY_HHMM_2));
 
 			assertTrue(currDateTime.isAfter(prevDateTime));
 			previous = current;
