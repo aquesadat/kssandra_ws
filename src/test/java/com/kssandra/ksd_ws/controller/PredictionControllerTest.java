@@ -118,7 +118,10 @@ class PredictionControllerTest {
 		mvc.perform(post(urlEndpoint).content(request).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.cxCurr").value("ADA")).andExpect(jsonPath("$.exCurr").value("EUR"))
-				.andExpect(jsonPath("$.items").exists()).andExpect(jsonPath("$.items").isArray());
+				.andExpect(jsonPath("$.items").exists()).andExpect(jsonPath("$.items").isArray())
+				.andExpect(jsonPath("$.items[0].expectedVal").value(4.58))
+				.andExpect(jsonPath("$.items[0].success").value("40%"))
+				.andExpect(jsonPath("$.items[0].dateTime").isNotEmpty());
 	}
 
 	private IntradayPredictionResponse getMockResponse() {

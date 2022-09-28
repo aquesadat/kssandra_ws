@@ -118,7 +118,8 @@ class CryptoDataControllerTest {
 		mvc.perform(post(urlEndpoint).content(request).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.cxCurr").value("ADA")).andExpect(jsonPath("$.exCurr").value("EUR"))
-				.andExpect(jsonPath("$.items").exists()).andExpect(jsonPath("$.items").isArray());
+				.andExpect(jsonPath("$.items").exists()).andExpect(jsonPath("$.items").isArray())
+				.andExpect(jsonPath("$.items[0].high").value(4.58)).andExpect(jsonPath("$.items[0].low").value(3.27));
 	}
 
 	private IntradayDataResponse getMockResponse() {
