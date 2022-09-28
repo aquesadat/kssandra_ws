@@ -43,6 +43,14 @@ public class IntradaySimulationRequest implements Serializable {
 	@DateFormatConstraint
 	private String dateTime;
 
+	public void setCxCurr(String cxCurr) {
+		this.cxCurr = cxCurr;
+	}
+
+	public void setExCurr(String exCurr) {
+		this.exCurr = exCurr;
+	}
+
 	public String getCxCurr() {
 		return cxCurr;
 	}

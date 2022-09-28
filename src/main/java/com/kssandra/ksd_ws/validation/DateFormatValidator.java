@@ -19,8 +19,8 @@ public class DateFormatValidator implements ConstraintValidator<DateFormatConstr
 	public boolean isValid(String dateTime, ConstraintValidatorContext cxt) {
 		if (dateTime != null) {
 			try {
-				DateTimeFormatter DATE_WITH_TIME_FORMAT = DateTimeFormatter.ofPattern(DateUtils.FORMAT_DDMMYYYY_HHMM);
-				LocalDateTime.parse(dateTime, DATE_WITH_TIME_FORMAT);
+				DateTimeFormatter dtFormat = DateTimeFormatter.ofPattern(DateUtils.FORMAT_DDMMYYYY_HHMM);
+				LocalDateTime.parse(dateTime, dtFormat);
 			} catch (Exception ex) {
 				return false;
 			}
