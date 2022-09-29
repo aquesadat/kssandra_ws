@@ -18,23 +18,46 @@ import com.kssandra.ksd_ws.request.IntradaySuggestionRequest;
 import com.kssandra.ksd_ws.response.IntradaySuggestionResponse;
 import com.kssandra.ksd_ws.service.IntradaySuggestionService;
 
+/**
+ * Controller to make investment suggestions for different crypto currencies.
+ * 
+ * @author aquesada
+ *
+ */
 @RestController
 @RequestMapping("/api/v1")
 public class SuggestionController {
 
+	/** The Constant LOG. */
 	private static final Logger LOG = LoggerFactory.getLogger(SuggestionController.class);
 
+	/** The intraday suggest service. */
 	@Autowired
 	IntradaySuggestionService intradaySuggestService;
 
+	/**
+	 * This post method returns the best cryptocurrencies to invest in
+	 *
+	 * @param intraRq  the endpoint request
+	 * @param request  the http request
+	 * @param response the hhtp response
+	 * @return the endpoint response
+	 * @throws KsdServiceException the custom exception
+	 */
 	@PostMapping(value = "/intraday/suggest", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	public IntradaySuggestionResponse getIntraDayData(@Valid @RequestBody IntradaySuggestionRequest intraRq,
 			HttpServletRequest request, HttpServletResponse response) throws KsdServiceException {
 
+		long beginTime = System.currentTimeMillis();
 		LOG.info("Begin intraday suggestion");
 
 		IntradaySuggestionResponse intraRs = intradaySuggestService.getSuggestion(intraRq);
+
+		// Sets status as OK (200). Any other case will be captured in
+		// CustomRestExceptionHandler
 		response.setStatus(HttpServletResponse.SC_OK);
+
+		LOG.info("End intraday simulation. Elapsed time: {} ms", System.currentTimeMillis() - beginTime);
 
 		return intraRs;
 
