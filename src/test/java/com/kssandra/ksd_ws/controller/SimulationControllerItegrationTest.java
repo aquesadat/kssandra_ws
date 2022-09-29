@@ -1,3 +1,6 @@
+/**
+ * 
+ */
 package com.kssandra.ksd_ws.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,13 +32,12 @@ import com.kssandra.ksd_ws.enums.CryptoCurrEnum;
 import com.kssandra.ksd_ws.enums.ExchangeCurrEnum;
 import com.kssandra.ksd_ws.enums.IntervalEnum;
 import com.kssandra.ksd_ws.repository.CryptoPredictionTestH2Repository;
-import com.kssandra.ksd_ws.request.IntradayPredictionRequest;
-
-import com.kssandra.ksd_ws.response.IntradayPredictionResponse;
-import com.kssandra.ksd_ws.response.IntradayPredictionResponseItem;
+import com.kssandra.ksd_ws.request.IntradaySimulationRequest;
+import com.kssandra.ksd_ws.response.IntradaySimulationResponseItem;
+import com.kssandra.ksd_ws.response.IntradaySimulationResponse;
 
 /**
- * Integration test class for PredictionController
+ * Integration test class for SimulationController
  * 
  * @author aquesada
  *
@@ -43,7 +45,7 @@ import com.kssandra.ksd_ws.response.IntradayPredictionResponseItem;
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestPropertySource(locations = "classpath:application-integrationtest.properties")
 @AutoConfigureMockMvc(addFilters = false)
-class PredictionControllerIntegrationTest {
+class SimulationControllerItegrationTest {
 
 	@Autowired
 	private WebTestClient testClient;
@@ -52,7 +54,7 @@ class PredictionControllerIntegrationTest {
 	@Autowired
 	private CryptoPredictionTestH2Repository cxPredictTestRepository;
 
-	private static final String urlEndpoint = "/api/v1/intraday/prediction";
+	private static final String urlEndpoint = "/api/v1/intraday/simulate";
 
 	@BeforeEach
 	private void updateData() {
@@ -66,11 +68,11 @@ class PredictionControllerIntegrationTest {
 
 	/**
 	 * Test method for getIntraDayData with any kind of KO response
+	 * {@link com.kssandra.ksd_ws.controller.SimulationController#getIntraDayData(com.kssandra.ksd_ws.request.IntradaySimulationRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
 	 */
 	@Test
 	void testGetIntraDayDataKO() {
-
-		IntradayPredictionRequest intraRq = new IntradayPredictionRequest();
+		IntradaySimulationRequest intraRq = new IntradaySimulationRequest();
 		intraRq.setExCurr(ExchangeCurrEnum.EUR.getValue());
 		intraRq.setInterval(IntervalEnum.M15.getName());
 
@@ -103,25 +105,67 @@ class PredictionControllerIntegrationTest {
 		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
 				.expectStatus().isBadRequest().expectBody().jsonPath("message", "interval - Invalid field value");
 
-		// Conflict - Custom Exception
+		// Bad Request - Amount
+		intraRq.setAmount(null);
+		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
+				.expectStatus().isBadRequest().expectBody().jsonPath("message", "amount - Missing field value");
+
+		intraRq.setAmount(Double.valueOf(0));
+		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
+				.expectStatus().isBadRequest().expectBody().jsonPath("message", "amount - Invalid field value");
+
+		intraRq.setAmount(-3.5);
+		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
+				.expectStatus().isBadRequest().expectBody().jsonPath("message", "amount - Invalid field value");
+
+		// Bad Request - PurchaseFee
+		intraRq.setAmount(40.5);
+		intraRq.setPurchaseFee(-0.5);
+		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
+				.expectStatus().isBadRequest().expectBody().jsonPath("message", "purchaseFee - Invalid field value");
+
+		intraRq.setPurchaseFee(10.5);
+		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
+				.expectStatus().isBadRequest().expectBody().jsonPath("message", "purchaseFee - Invalid field value");
+
+		// Bad Request - SaleFee
+		intraRq.setPurchaseFee(null);
+		intraRq.setSaleFee(-0.5);
+		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
+				.expectStatus().isBadRequest().expectBody().jsonPath("message", "saleFee - Invalid field value");
+
+		intraRq.setSaleFee(100.5);
+		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
+				.expectStatus().isBadRequest().expectBody().jsonPath("message", "saleFee - Invalid field value");
+
+		// Conflict - Custom Exception: Cryptocurrency not configured in DB
+		intraRq.setSaleFee(null);
 		intraRq.setInterval(IntervalEnum.M15.getName());
 		intraRq.setCxCurr(CryptoCurrEnum.ETH.getValue());
 		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
 				.expectStatus().isEqualTo(HttpStatus.CONFLICT);
+
+		// Conflict - Custom Exception: Request dateTime is not valid (more than 24h)
+		intraRq.setCxCurr(CryptoCurrEnum.ADA.getValue());
+		intraRq.setDateTime(
+				LocalDateTime.now().plusDays(2).format(DateTimeFormatter.ofPattern(DateUtils.FORMAT_DDMMYYYY_HHMM)));
+		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
+				.expectStatus().isEqualTo(HttpStatus.CONFLICT);
+
 	}
 
 	/**
 	 * Test method for getIntraDayData with OK response
-	 *
-	 * @throws Exception the exception
+	 * {@link com.kssandra.ksd_ws.controller.SimulationController#getIntraDayData(com.kssandra.ksd_ws.request.IntradaySimulationRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
 	 */
 	@Test
-	void testGetIntraDayDataOK() throws Exception {
+	void testGetIntraDayDataOK() {
+		IntradaySimulationRequest intraRq = new IntradaySimulationRequest();
 
-		IntradayPredictionRequest intraRq = new IntradayPredictionRequest();
 		intraRq.setCxCurr(CryptoCurrEnum.BTC.getValue());
 		intraRq.setExCurr(ExchangeCurrEnum.EUR.getValue());
 		intraRq.setInterval(IntervalEnum.M15.getName());
+		intraRq.setAmount(Double.valueOf(100));
 
 		// No prediction data stored in DB for the crypto currency
 		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
@@ -132,40 +176,40 @@ class PredictionControllerIntegrationTest {
 		intraRq.setCxCurr(CryptoCurrEnum.ADA.getValue());
 
 		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
-				.expectStatus().isOk().expectBody(IntradayPredictionResponse.class).consumeWith(result -> {
-					IntradayPredictionResponse response = result.getResponseBody();
+				.expectStatus().isOk().expectBody(IntradaySimulationResponse.class).consumeWith(result -> {
+					IntradaySimulationResponse response = result.getResponseBody();
 					assertEquals(CryptoCurrEnum.ADA.getValue(), response.getCxCurr());
 					assertEquals(ExchangeCurrEnum.EUR.getValue(), response.getExCurr());
 
-					List<IntradayPredictionResponseItem> items = response.getItems();
+					List<IntradaySimulationResponseItem> items = response.getItems();
 					assertNotNull(items);
 					assertFalse(items.isEmpty());
 
 					IntervalEnum interval = IntervalEnum.valueOf(IntervalEnum.M15.getName());
 
-					Iterator<IntradayPredictionResponseItem> iter = items.iterator();
-					IntradayPredictionResponseItem current, previous = iter.next();
+					Iterator<IntradaySimulationResponseItem> iter = items.iterator();
+					IntradaySimulationResponseItem current, previous = iter.next();
 
 					while (iter.hasNext()) {
 						current = iter.next();
 
 						// Minutes match interval values
 						LocalDateTime prevDateTime = LocalDateTime.parse(previous.getDateTime(),
-								DateTimeFormatter.ofPattern(DateUtils.FORMAT_DDMMYYYY_HHMMSS));
+								DateTimeFormatter.ofPattern(DateUtils.FORMAT_DDMMYYYY_HHMM_2));
 						assertNotNull(current.getDateTime());
 						assertTrue(interval.getValues().contains(prevDateTime.getMinute()));
 						assertTrue(previous.getSuccess().equals("N/A") || previous.getSuccess().contains("%"));
 						assertTrue(previous.getExpectedVal() != null);
+						assertTrue(previous.getProfit() != null);
 
 						// Items are sorted by date ascending
 						LocalDateTime currDateTime = LocalDateTime.parse(current.getDateTime(),
-								DateTimeFormatter.ofPattern(DateUtils.FORMAT_DDMMYYYY_HHMMSS));
+								DateTimeFormatter.ofPattern(DateUtils.FORMAT_DDMMYYYY_HHMM_2));
 
 						assertTrue(currDateTime.isAfter(prevDateTime));
 						previous = current;
 					}
 				});
-
 	}
 
 	private Prediction updateReadTime(Prediction pred) {
@@ -177,5 +221,4 @@ class PredictionControllerIntegrationTest {
 
 		return pred;
 	}
-
 }
