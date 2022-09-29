@@ -1,14 +1,13 @@
 package com.kssandra.ksd_ws.service;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
-
-import javax.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,55 +22,86 @@ import com.kssandra.ksd_persistence.dao.CryptoCurrencyDao;
 import com.kssandra.ksd_persistence.dao.CryptoDataDao;
 import com.kssandra.ksd_persistence.dao.PredictionDao;
 import com.kssandra.ksd_persistence.dao.PredictionSuccessDao;
-import com.kssandra.ksd_ws.exception.KsdServiceException;
 import com.kssandra.ksd_ws.request.IntradaySuggestionRequest;
 import com.kssandra.ksd_ws.response.IntradaySuggestionResponse;
 import com.kssandra.ksd_ws.response.IntradaySuggestionResponseItem;
 import com.kssandra.ksd_ws.util.PredictionUtil;
 
+/**
+ * Service class for /intraday/suggest endpoint.
+ *
+ * @author aquesada
+ */
 @Service
 public class IntradaySuggestionService {
 
+	/** Max number of cxcurrs in the response */
 	public static final long MAX_RESULTS = 5;
 
+	/** The CrptoCurrency DAO. */
 	@Autowired
 	CryptoCurrencyDao cxCurrDao;
 
+	/** The CryptoData DAO */
 	@Autowired
 	CryptoDataDao cxDataDao;
 
+	/** The Prediction DAO. */
 	@Autowired
 	PredictionDao predictionDao;
 
+	/** The PredictionSuccess DAO. */
 	@Autowired
 	PredictionSuccessDao predictionSuccessDao;
 
+	/** The intraday prediction service. */
 	@Autowired
 	IntradayPredictionService intradayPredService;
 
+	/** The Constant LOG. */
 	private static final Logger LOG = LoggerFactory.getLogger(IntradaySuggestionService.class);
 
-	public IntradaySuggestionResponse getSuggestion(@Valid IntradaySuggestionRequest intraRq)
-			throws KsdServiceException {
+	/**
+	 * Gets the suggestion.
+	 *
+	 * @param intraRq the request
+	 * @return the suggestion
+	 */
+	public IntradaySuggestionResponse getSuggestion(IntradaySuggestionRequest intraRq) {
 
 		IntradaySuggestionResponse response = new IntradaySuggestionResponse();
 
 		List<CryptoCurrencyDto> cxCurrs = cxCurrDao.getAllActiveCxCurrencies();
 		Map<Double, IntradaySuggestionResponseItem> suggItems = new TreeMap<>(Collections.reverseOrder());
 
+		LOG.debug("Found {} active cryptocurrencies", cxCurrs.size());
+
 		for (CryptoCurrencyDto cxCurr : cxCurrs) {
 
+			// Get predictions for the current cryptocurrency and time = +24h
 			List<PredictionDto> predictions = predictionDao.findByDate(cxCurr, LocalDateTime.now().plusDays(1));
 
-			List<PredictionSuccessDto> predSuccess = predictionSuccessDao
-					.findSuccess(predictions.get(0).getCxCurrencyDto());
+			// Gets (from a view) all sample-advance combinations and its success (data from
+			// past predictions already evaluated)
+			List<PredictionSuccessDto> predSuccess = predictionSuccessDao.findSuccess(cxCurr);
 
-			Map<LocalDateTime, PredictionDto> bestPredictions = PredictionUtil.getBestPredictions(predictions,
-					predSuccess, null);
+			// According to the past evaluated predictions (predSuccess), get the best
+			// future prediction (sample-advance combination) for every time in the next 24h
+			Collection<PredictionDto> bestPredictions = PredictionUtil
+					.getBestPredictions(predictions, predSuccess, null).values();
 
-			Optional<PredictionDto> bestPrediction = bestPredictions.values().stream()
-					.sorted((e1, e2) -> e1.getPredictTime().compareTo(e2.getPredictTime())).findFirst();
+			// Get the best success (or the highest price) from all the predictions
+			Optional<PredictionDto> bestPrediction;
+			if (bestPredictions.stream().anyMatch(bp -> bp.getSuccess() != null)) {
+				bestPrediction = bestPredictions.stream().filter(bp -> bp.getSuccess() != null)
+						.sorted((e1, e2) -> e2.getSuccess().compareTo(e1.getSuccess())).findFirst();
+			} else {
+				bestPrediction = bestPredictions.stream()
+						.sorted((e1, e2) -> e1.getPredictTime().compareTo(e2.getPredictTime())).findFirst();
+			}
 
+			// Builds a map <raise, prediction> sorted by raise descending to get the most
+			// potential price raises
 			if (bestPrediction.isPresent()) {
 				addPrediction(suggItems, cxCurr, bestPrediction.get());
 			} else {
@@ -94,6 +124,13 @@ public class IntradaySuggestionService {
 		return response;
 	}
 
+	/**
+	 * Adds the prediction to a map with price raise as key
+	 *
+	 * @param suggItems      the sugg items
+	 * @param cxCurr         the cx curr
+	 * @param bestPrediction the best prediction
+	 */
 	private void addPrediction(Map<Double, IntradaySuggestionResponseItem> suggItems, CryptoCurrencyDto cxCurr,
 			PredictionDto bestPrediction) {
 		Double currVal = cxDataDao.getCurrVal(cxCurr);
