@@ -36,7 +36,7 @@ import com.kssandra.ksd_ws.util.PredictionUtil;
 public class IntradaySuggestionService {
 
 	/** Max number of cxcurrs in the response */
-	public static final long MAX_RESULTS = 5;
+	public static final int MAX_RESULTS = 5;
 
 	/** The CrptoCurrency DAO. */
 	@Autowired
@@ -84,11 +84,13 @@ public class IntradaySuggestionService {
 			// Gets (from a view) all sample-advance combinations and its success (data from
 			// past predictions already evaluated)
 			List<PredictionSuccessDto> predSuccess = predictionSuccessDao.findSuccess(cxCurr);
+			LOG.debug("{} success predictions found", predSuccess.size());
 
 			// According to the past evaluated predictions (predSuccess), get the best
 			// future prediction (sample-advance combination) for every time in the next 24h
 			Collection<PredictionDto> bestPredictions = PredictionUtil
 					.getBestPredictions(predictions, predSuccess, null).values();
+			LOG.debug("{} best predictions found", bestPredictions.size());
 
 			// Get the best success (or the highest price) from all the predictions
 			Optional<PredictionDto> bestPrediction;
@@ -98,6 +100,7 @@ public class IntradaySuggestionService {
 			} else {
 				bestPrediction = bestPredictions.stream()
 						.sorted((e1, e2) -> e1.getPredictTime().compareTo(e2.getPredictTime())).findFirst();
+				LOG.warn("All predictions without success value");
 			}
 
 			// Builds a map <raise, prediction> sorted by raise descending to get the most
