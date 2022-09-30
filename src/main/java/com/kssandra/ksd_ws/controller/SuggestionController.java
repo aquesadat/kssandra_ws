@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.kssandra.ksd_ws.exception.KsdServiceException;
 import com.kssandra.ksd_ws.request.IntradaySuggestionRequest;
 import com.kssandra.ksd_ws.response.IntradaySuggestionResponse;
 import com.kssandra.ksd_ws.service.IntradaySuggestionService;
@@ -42,11 +41,10 @@ public class SuggestionController {
 	 * @param request  the http request
 	 * @param response the hhtp response
 	 * @return the endpoint response
-	 * @throws KsdServiceException the custom exception
 	 */
 	@PostMapping(value = "/intraday/suggest", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	public IntradaySuggestionResponse getIntraDayData(@Valid @RequestBody IntradaySuggestionRequest intraRq,
-			HttpServletRequest request, HttpServletResponse response) throws KsdServiceException {
+			HttpServletRequest request, HttpServletResponse response) {
 
 		long beginTime = System.currentTimeMillis();
 		LOG.info("Begin intraday suggestion");
