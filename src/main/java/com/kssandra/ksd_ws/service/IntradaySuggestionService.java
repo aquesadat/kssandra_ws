@@ -1,6 +1,8 @@
 package com.kssandra.ksd_ws.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -72,7 +74,7 @@ public class IntradaySuggestionService {
 		IntradaySuggestionResponse response = new IntradaySuggestionResponse();
 
 		List<CryptoCurrencyDto> cxCurrs = cxCurrDao.getAllActiveCxCurrencies();
-		Map<Double, IntradaySuggestionResponseItem> suggItems = new TreeMap<>(Collections.reverseOrder());
+		Map<Double, List<IntradaySuggestionResponseItem>> suggItems = new TreeMap<>(Collections.reverseOrder());
 
 		LOG.debug("Found {} active cryptocurrencies", cxCurrs.size());
 
@@ -114,7 +116,7 @@ public class IntradaySuggestionService {
 
 		long nResults = intraRq.getNumResult() != null ? intraRq.getNumResult() : MAX_RESULTS;
 
-		List<IntradaySuggestionResponseItem> items = suggItems.values().stream().limit(nResults)
+		List<IntradaySuggestionResponseItem> items = suggItems.values().stream().flatMap(List::stream).limit(nResults)
 				.collect(Collectors.toList());
 
 		for (int i = 0; i < items.size(); i++) {
@@ -134,7 +136,7 @@ public class IntradaySuggestionService {
 	 * @param cxCurr         the cx curr
 	 * @param bestPrediction the best prediction
 	 */
-	private void addPrediction(Map<Double, IntradaySuggestionResponseItem> suggItems, CryptoCurrencyDto cxCurr,
+	private void addPrediction(Map<Double, List<IntradaySuggestionResponseItem>> suggItems, CryptoCurrencyDto cxCurr,
 			PredictionDto bestPrediction) {
 		Double currVal = cxDataDao.getCurrVal(cxCurr);
 
@@ -146,7 +148,11 @@ public class IntradaySuggestionService {
 		item.setExpectedVal(PriceUtils.roundPrice(bestPrediction.getPredictVal()));
 		item.setSuccess(PredictionUtil.beautifySuccess(bestPrediction.getSuccess()));
 
-		suggItems.put(raise, item);
+		if (suggItems.containsKey(raise)) {
+			suggItems.get(raise).add(item);
+		} else {
+			suggItems.put(raise, new ArrayList<>(Arrays.asList(item)));
+		}
 
 	}
 
