@@ -20,7 +20,7 @@
 	
 	<properties>
 		<java.version>1.8</java.version>
-		<ksd.persistence.version>0.0.1-SNAPSHOT</ksd.persistence.version>
+		<ksd.persistence.version>0.0.2-SNAPSHOT</ksd.persistence.version>
 		<keycloak.version>16.0.0</keycloak.version>
 	</properties>
 	<dependencies>
