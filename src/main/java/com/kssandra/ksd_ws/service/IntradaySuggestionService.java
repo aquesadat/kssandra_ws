@@ -38,7 +38,7 @@ import com.kssandra.ksd_ws.util.PredictionUtil;
 public class IntradaySuggestionService {
 
 	/** Max number of cxcurrs in the response */
-	public static final int MAX_RESULTS = 5;
+	public static final int MAX_RESULTS = 10;
 
 	/** The CrptoCurrency DAO. */
 	@Autowired
@@ -142,11 +142,13 @@ public class IntradaySuggestionService {
 
 		IntradaySuggestionResponseItem item = new IntradaySuggestionResponseItem();
 
-		Double raise = PriceUtils.roundPrice(100 - (bestPrediction.getPredictVal() * 100) / currVal);
+		Double raise = PriceUtils.roundPrice(((bestPrediction.getPredictVal() * 100) / currVal) - 100);
 		item.setCxCurr(cxCurr.getCode());
+		item.setCxCurrDesc(cxCurr.getName());
 		item.setExpectedRaise(String.valueOf(raise).concat("%"));
 		item.setExpectedVal(PriceUtils.roundPrice(bestPrediction.getPredictVal()));
 		item.setSuccess(PredictionUtil.beautifySuccess(bestPrediction.getSuccess()));
+		item.setCurrVal(PriceUtils.roundPrice(currVal));
 
 		if (suggItems.containsKey(raise)) {
 			suggItems.get(raise).add(item);
