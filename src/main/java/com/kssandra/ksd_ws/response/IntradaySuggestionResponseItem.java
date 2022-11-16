@@ -10,6 +10,10 @@ public class IntradaySuggestionResponseItem implements Serializable {
 
 	private String cxCurr;
 
+	private String cxCurrDesc;
+
+	private Double currVal;
+
 	private Double expectedVal;
 
 	private String expectedRaise;
@@ -54,6 +58,22 @@ public class IntradaySuggestionResponseItem implements Serializable {
 
 	public void setSuccess(String success) {
 		this.success = success;
+	}
+
+	public String getCxCurrDesc() {
+		return cxCurrDesc;
+	}
+
+	public void setCxCurrDesc(String cxCurrDesc) {
+		this.cxCurrDesc = cxCurrDesc;
+	}
+
+	public Double getCurrVal() {
+		return currVal;
+	}
+
+	public void setCurrVal(Double currVal) {
+		this.currVal = currVal;
 	}
 
 }
