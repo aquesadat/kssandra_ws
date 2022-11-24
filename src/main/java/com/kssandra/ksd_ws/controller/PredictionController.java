@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,6 +25,7 @@ import com.kssandra.ksd_ws.service.IntradayPredictionService;
  * @author aquesada
  */
 @RestController
+@CrossOrigin(origins = "http://localhost:8081")
 @RequestMapping("/api/v1")
 public class PredictionController {
 
