@@ -87,10 +87,10 @@ public class IntradayDataService {
 		// For every dto read from DB:
 		// 1.- Check if dto time matches interval times. E.g. For 15min interval, dto
 		// times should be HH:00, HH:15, HH:30 or HH:45
-		// 2.- Sort elements descending according to the price time
+		// 2.- Sort elements ascending according to the date time
 		// 3.- Build response item and add it to list
 		data.stream().filter(dto -> interval.getValues().contains(dto.getReadTime().getMinute()))
-				.sorted((e1, e2) -> e2.getReadTime().compareTo(e1.getReadTime()))
+				.sorted((e1, e2) -> e1.getReadTime().compareTo(e2.getReadTime()))
 				.forEach(dto -> items.add(getIntraRsItem(dto, extended)));
 
 		LOG.debug("{} items match minutes of interval", items.size());
