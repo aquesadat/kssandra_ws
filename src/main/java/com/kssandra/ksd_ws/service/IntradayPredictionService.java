@@ -7,13 +7,13 @@ import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kssandra.ksd_common.dto.CryptoCurrencyDto;
 import com.kssandra.ksd_common.dto.PredictionDto;
 import com.kssandra.ksd_common.dto.PredictionSuccessDto;
+import com.kssandra.ksd_common.logger.KSDLoggerFactory;
 import com.kssandra.ksd_common.util.DateUtils;
 import com.kssandra.ksd_common.util.PriceUtils;
 import com.kssandra.ksd_persistence.dao.CryptoCurrencyDao;
@@ -47,7 +47,7 @@ public class IntradayPredictionService {
 	CryptoCurrencyDao cxCurrDao;
 
 	/** The Constant LOG. */
-	private static final Logger LOG = LoggerFactory.getLogger(IntradayPredictionService.class);
+	private static final Logger LOG = KSDLoggerFactory.getLogger();
 
 	/**
 	 * Gets the prediction.

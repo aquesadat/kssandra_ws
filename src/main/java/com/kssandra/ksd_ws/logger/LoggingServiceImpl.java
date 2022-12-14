@@ -9,16 +9,16 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kssandra.ksd_common.logger.KSDLoggerFactory;
 
 @Service
 public class LoggingServiceImpl implements LoggingService {
 
-	private static final Logger LOG = LoggerFactory.getLogger(LoggingServiceImpl.class);
+	private static final Logger LOG = KSDLoggerFactory.getLogger();
 
 	private static final String RQ_BEGIN = "===========================request begin============================================";
 

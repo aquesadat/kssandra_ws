@@ -1,12 +1,11 @@
 package com.kssandra.ksd_ws.enums;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
 public enum IntervalEnum {
 
-	M15("M15", Arrays.asList(0, 15, 30, 45)), M30("M30", Arrays.asList(0, 30)), M60("M60", Arrays.asList(0));
+	M15("M15", List.of(0, 15, 30, 45)), M30("M30", List.of(0, 30)), M60("M60", List.of(0));
 
 	private String name;
 

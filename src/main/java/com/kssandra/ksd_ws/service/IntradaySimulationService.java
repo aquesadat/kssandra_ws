@@ -6,15 +6,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kssandra.ksd_common.dto.CryptoCurrencyDto;
 import com.kssandra.ksd_common.dto.PredictionDto;
 import com.kssandra.ksd_common.dto.PredictionSuccessDto;
+import com.kssandra.ksd_common.logger.KSDLoggerFactory;
 import com.kssandra.ksd_common.util.DateUtils;
 import com.kssandra.ksd_common.util.PriceUtils;
 import com.kssandra.ksd_persistence.dao.CryptoCurrencyDao;
@@ -54,7 +53,7 @@ public class IntradaySimulationService {
 	PredictionSuccessDao predictionSuccessDao;
 
 	/** The Constant LOG. */
-	private static final Logger LOG = LoggerFactory.getLogger(IntradaySimulationService.class);
+	private static final Logger LOG = KSDLoggerFactory.getLogger();
 
 	/**
 	 * Gets the simulation.
@@ -72,7 +71,7 @@ public class IntradaySimulationService {
 		CryptoCurrencyDto cxCurrDto = cxCurrDao.findByCode(intraRq.getCxCurr());
 		if (cxCurrDto != null) {
 
-			boolean hasDate = StringUtils.isNotBlank(intraRq.getDateTime());
+			boolean hasDate = intraRq.getDateTime() != null && !intraRq.getDateTime().isBlank();
 
 			List<PredictionDto> predictions = null;
 

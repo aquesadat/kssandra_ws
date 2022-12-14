@@ -6,17 +6,14 @@ package com.kssandra.ksd_ws.service;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
-import org.assertj.core.util.Arrays;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,16 +22,12 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import com.kssandra.ksd_common.dto.CryptoCurrencyDto;
 import com.kssandra.ksd_common.dto.PredictionDto;
 import com.kssandra.ksd_common.dto.PredictionSuccessDto;
-import com.kssandra.ksd_common.util.DateUtils;
 import com.kssandra.ksd_persistence.dao.CryptoCurrencyDao;
 import com.kssandra.ksd_persistence.dao.CryptoDataDao;
 import com.kssandra.ksd_persistence.dao.PredictionDao;
 import com.kssandra.ksd_persistence.dao.PredictionSuccessDao;
 import com.kssandra.ksd_ws.enums.ExchangeCurrEnum;
-import com.kssandra.ksd_ws.enums.IntervalEnum;
 import com.kssandra.ksd_ws.request.IntradaySuggestionRequest;
-import com.kssandra.ksd_ws.response.IntradaySimulationResponse;
-import com.kssandra.ksd_ws.response.IntradaySimulationResponseItem;
 import com.kssandra.ksd_ws.response.IntradaySuggestionResponse;
 import com.kssandra.ksd_ws.response.IntradaySuggestionResponseItem;
 

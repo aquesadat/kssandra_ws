@@ -2,7 +2,6 @@ package com.kssandra.ksd_ws.service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -12,13 +11,13 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kssandra.ksd_common.dto.CryptoCurrencyDto;
 import com.kssandra.ksd_common.dto.PredictionDto;
 import com.kssandra.ksd_common.dto.PredictionSuccessDto;
+import com.kssandra.ksd_common.logger.KSDLoggerFactory;
 import com.kssandra.ksd_common.util.PriceUtils;
 import com.kssandra.ksd_persistence.dao.CryptoCurrencyDao;
 import com.kssandra.ksd_persistence.dao.CryptoDataDao;
@@ -61,7 +60,7 @@ public class IntradaySuggestionService {
 	IntradayPredictionService intradayPredService;
 
 	/** The Constant LOG. */
-	private static final Logger LOG = LoggerFactory.getLogger(IntradaySuggestionService.class);
+	private static final Logger LOG = KSDLoggerFactory.getLogger();
 
 	/**
 	 * Gets the suggestion.
@@ -107,11 +106,8 @@ public class IntradaySuggestionService {
 
 			// Builds a map <raise, prediction> sorted by raise descending to get the most
 			// potential price raises
-			if (bestPrediction.isPresent()) {
-				addPrediction(suggItems, cxCurr, bestPrediction.get());
-			} else {
-				LOG.error("Best prediction not found for cxCurr {}", cxCurr.getCode());
-			}
+			bestPrediction.ifPresentOrElse(bp -> addPrediction(suggItems, cxCurr, bp),
+					() -> LOG.error("Best prediction not found for cxCurr {}", cxCurr.getCode()));
 		}
 
 		long nResults = intraRq.getNumResult() != null ? intraRq.getNumResult() : MAX_RESULTS;
@@ -153,7 +149,7 @@ public class IntradaySuggestionService {
 		if (suggItems.containsKey(raise)) {
 			suggItems.get(raise).add(item);
 		} else {
-			suggItems.put(raise, new ArrayList<>(Arrays.asList(item)));
+			suggItems.put(raise, new ArrayList<>(List.of(item)));
 		}
 
 	}
