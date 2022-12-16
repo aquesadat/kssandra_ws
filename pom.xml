@@ -12,15 +12,15 @@
 	
 	<groupId>com.kssandra</groupId>
 	<artifactId>ksd_ws</artifactId>
-	<version>0.0.2-SNAPSHOT</version>
+	<version>0.0.3-SNAPSHOT</version>
 	
 	<packaging>war</packaging>
 	<name>ksd_ws</name>
 	<description>Kssandra REST WS</description>
 	
 	<properties>
-		<java.version>1.11</java.version>
-		<ksd.persistence.version>0.0.3-SNAPSHOT</ksd.persistence.version>
+		<java.version>1.17</java.version>
+		<ksd.persistence.version>0.0.4-SNAPSHOT</ksd.persistence.version>
 		<keycloak.version>16.0.0</keycloak.version>
 	</properties>
 	<dependencies>
