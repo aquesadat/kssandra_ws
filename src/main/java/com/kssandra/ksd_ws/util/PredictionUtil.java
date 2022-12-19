@@ -62,12 +62,11 @@ public class PredictionUtil {
 
 		// For one future prediction, finds into past evaluated predictions list one
 		// with the same advance an sample size value
-		Optional<PredictionSuccessDto> result = predSuccess.stream()
-				.filter(dto -> dto.getAdvance() == predictionDto.getAdvance()
-						&& dto.getSampleSize() == predictionDto.getSampleSize())
+		Optional<PredictionSuccessDto> result = predSuccess.stream().filter(
+				dto -> dto.advance() == predictionDto.getAdvance() && dto.sampleSize() == predictionDto.getSampleSize())
 				.findFirst();
 
-		return result.isPresent() ? result.get().getSuccess() : null;
+		return result.isPresent() ? result.get().success() : null;
 	}
 
 	/**

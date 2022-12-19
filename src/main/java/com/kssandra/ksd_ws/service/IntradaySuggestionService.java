@@ -107,7 +107,7 @@ public class IntradaySuggestionService {
 			// Builds a map <raise, prediction> sorted by raise descending to get the most
 			// potential price raises
 			bestPrediction.ifPresentOrElse(bp -> addPrediction(suggItems, cxCurr, bp),
-					() -> LOG.error("Best prediction not found for cxCurr {}", cxCurr.getCode()));
+					() -> LOG.error("Best prediction not found for cxCurr {}", cxCurr.code()));
 		}
 
 		long nResults = intraRq.getNumResult() != null ? intraRq.getNumResult() : MAX_RESULTS;
@@ -139,8 +139,8 @@ public class IntradaySuggestionService {
 		IntradaySuggestionResponseItem item = new IntradaySuggestionResponseItem();
 
 		Double raise = PriceUtils.roundPrice(((bestPrediction.getPredictVal() * 100) / currVal) - 100);
-		item.setCxCurr(cxCurr.getCode());
-		item.setCxCurrDesc(cxCurr.getName());
+		item.setCxCurr(cxCurr.code());
+		item.setCxCurrDesc(cxCurr.name());
 		item.setExpectedRaise(String.valueOf(raise).concat("%"));
 		item.setExpectedVal(PriceUtils.roundPrice(bestPrediction.getPredictVal()));
 		item.setSuccess(PredictionUtil.beautifySuccess(bestPrediction.getSuccess()));

@@ -13,7 +13,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
+import java.util.random.RandomGenerator;
+import java.util.random.RandomGeneratorFactory;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,7 +70,7 @@ class IntradayPredictionServiceTest {
 				() -> intradayPredictionService.getPrediction(buildIntraRq("XXX", null, null)));
 
 		// No prediction data stored in DB for the crypto currency
-		CryptoCurrencyDto cxCurr = new CryptoCurrencyDto("AAA");
+		CryptoCurrencyDto cxCurr = new CryptoCurrencyDto("AAA", null, null, false);
 		when(cxCurrDao.findByCode("AAA")).thenReturn(cxCurr);
 		when(predictionDao.findBetweenDates(eq(cxCurr), any(), any())).thenReturn(new ArrayList<PredictionDto>());
 		IntradayPredictionResponse response = intradayPredictionService
@@ -79,7 +80,7 @@ class IntradayPredictionServiceTest {
 		assertTrue(response.getItems().isEmpty());
 
 		// The crypto currency has prediction data stored in DB
-		cxCurr = new CryptoCurrencyDto("BBB");
+		cxCurr = new CryptoCurrencyDto("BBB", null, null, false);
 		when(cxCurrDao.findByCode("BBB")).thenReturn(cxCurr);
 		List<PredictionDto> predictions = buildItemList();
 		when(predictionDao.findBetweenDates(eq(cxCurr), any(), any())).thenReturn(predictions);
@@ -136,16 +137,15 @@ class IntradayPredictionServiceTest {
 
 	private List<PredictionSuccessDto> buildSuccessList(List<PredictionDto> predictions) {
 		List<PredictionSuccessDto> items = new ArrayList<>();
-		Random r = new Random();
+		RandomGenerator r = RandomGeneratorFactory.getDefault().create();
 
 		// Simply to make sure that all samples and advances from predictions exist in
 		// predictionSuccess
 		for (PredictionDto prediction : predictions) {
-			PredictionSuccessDto item = new PredictionSuccessDto();
-			item.setAdvance(prediction.getAdvance());
-			item.setSampleSize(prediction.getSampleSize());
-			item.setSuccess(r.nextDouble());
+			PredictionSuccessDto item = new PredictionSuccessDto(null, prediction.getSampleSize(),
+					prediction.getAdvance(), r.nextDouble());
 			items.add(item);
+
 		}
 
 		return items;
@@ -153,7 +153,7 @@ class IntradayPredictionServiceTest {
 
 	private List<PredictionDto> buildItemList() {
 		List<PredictionDto> items = new ArrayList<>();
-		Random r = new Random();
+		RandomGenerator r = RandomGeneratorFactory.getDefault().create();
 		LocalDateTime currTime = LocalDateTime.now().withMinute(0);
 
 		for (int i = 0; i < 96; i++) {

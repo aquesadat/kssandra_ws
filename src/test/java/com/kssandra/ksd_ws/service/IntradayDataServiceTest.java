@@ -11,7 +11,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
+import java.util.random.RandomGenerator;
+import java.util.random.RandomGeneratorFactory;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,7 +63,7 @@ class IntradayDataServiceTest {
 				() -> indradayDataService.getData(buildIntraRq("XXX", null, false, null)));
 
 		// No price data stored in DB for the crypto currency
-		CryptoCurrencyDto cxCurr = new CryptoCurrencyDto("AAA");
+		CryptoCurrencyDto cxCurr = new CryptoCurrencyDto("AAA", null, null, false);
 		when(cxCurrDao.findByCode("AAA")).thenReturn(cxCurr);
 		when(cryptoDataDao.findAfterDate(eq(cxCurr), any())).thenReturn(new ArrayList<CryptoDataDto>());
 		IntradayDataResponse response = indradayDataService.getData(buildIntraRq("AAA", "EUR", false, "M15"));
@@ -71,7 +72,7 @@ class IntradayDataServiceTest {
 		assertTrue(response.getItems().isEmpty());
 
 		// The crypto currency has price data stored in DB
-		cxCurr = new CryptoCurrencyDto("BBB");
+		cxCurr = new CryptoCurrencyDto("BBB", null, null, false);
 		String rqInterval = "M15";
 		when(cxCurrDao.findByCode("BBB")).thenReturn(cxCurr);
 		when(cryptoDataDao.findAfterDate(eq(cxCurr), any())).thenReturn(buildItemList());
@@ -118,7 +119,7 @@ class IntradayDataServiceTest {
 	private List<CryptoDataDto> buildItemList() {
 
 		List<CryptoDataDto> items = new ArrayList<>();
-		Random r = new Random();
+		RandomGenerator r = RandomGeneratorFactory.getDefault().create();
 		LocalDateTime readTime = LocalDateTime.now();
 
 		for (int i = 0; i < 100; i++) {

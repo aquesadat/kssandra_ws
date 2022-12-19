@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.random.RandomGenerator;
+import java.util.random.RandomGeneratorFactory;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,9 +73,9 @@ class IntradaySuggestionServiceTest {
 		assertTrue(response.getItems().isEmpty());
 
 		// No prediction data stored in DB for the crypto currency
-		CryptoCurrencyDto cxCurrA = new CryptoCurrencyDto("AAA");
-		CryptoCurrencyDto cxCurrB = new CryptoCurrencyDto("BBB");
-		CryptoCurrencyDto cxCurrC = new CryptoCurrencyDto("CCC");
+		CryptoCurrencyDto cxCurrA = new CryptoCurrencyDto("AAA", null, null, false);
+		CryptoCurrencyDto cxCurrB = new CryptoCurrencyDto("BBB", null, null, false);
+		CryptoCurrencyDto cxCurrC = new CryptoCurrencyDto("CCC", null, null, false);
 		List<CryptoCurrencyDto> cxCurrs = new ArrayList<>();
 		cxCurrs.add(cxCurrA);
 		cxCurrs.add(cxCurrB);
@@ -152,7 +154,8 @@ class IntradaySuggestionServiceTest {
 
 	private List<PredictionDto> generatePredictions(CryptoCurrencyDto cxCurr) {
 		List<PredictionDto> items = new ArrayList<>();
-		Random r = new Random();
+		RandomGenerator r = RandomGeneratorFactory.getDefault().create();
+
 		LocalDateTime currTime = LocalDateTime.now().withMinute(0);
 
 		for (int i = 0; i < 96; i++) {
@@ -173,17 +176,13 @@ class IntradaySuggestionServiceTest {
 
 	private List<PredictionSuccessDto> buildSuccessList(List<PredictionDto> predictions, CryptoCurrencyDto cxCurr) {
 		List<PredictionSuccessDto> items = new ArrayList<>();
-		Random r = new Random();
+		RandomGenerator r = RandomGeneratorFactory.getDefault().create();
 
 		// Simply to make sure that all samples and advances from predictions exist in
 		// predictionSuccess
 		for (PredictionDto prediction : predictions) {
-			PredictionSuccessDto item = new PredictionSuccessDto();
-			item.setAdvance(prediction.getAdvance());
-			item.setSampleSize(prediction.getSampleSize());
-			item.setSuccess(r.nextDouble());
-			item.setCxCurrencyDto(cxCurr);
-			item.setSuccess(r.nextDouble());
+			PredictionSuccessDto item = new PredictionSuccessDto(cxCurr, prediction.getSampleSize(),
+					prediction.getAdvance(), r.nextDouble());
 			items.add(item);
 		}
 

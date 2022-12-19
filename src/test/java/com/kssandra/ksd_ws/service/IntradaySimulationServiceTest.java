@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.random.RandomGenerator;
+import java.util.random.RandomGeneratorFactory;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -81,7 +83,7 @@ class IntradaySimulationServiceTest {
 
 		// Request dateTime is not valid (more than 24h)
 		LocalDateTime rqDateTime = LocalDateTime.now().plusDays(2);
-		CryptoCurrencyDto cxCurr = new CryptoCurrencyDto("AAA");
+		CryptoCurrencyDto cxCurr = new CryptoCurrencyDto("AAA", null, null, false);
 		when(cxCurrDao.findByCode("AAA")).thenReturn(cxCurr);
 		assertThrows(KsdServiceException.class,
 				() -> intradaySimulationService.getSimulation(buildIntraRq("AAA", "EUR", "M15", rqDateTime, null)));
@@ -108,7 +110,7 @@ class IntradaySimulationServiceTest {
 		assertTrue(response.getItems().isEmpty());
 
 		// The crypto currency has prediction data stored in DB
-		cxCurr = new CryptoCurrencyDto("BBB");
+		cxCurr = new CryptoCurrencyDto("BBB", null, null, false);
 		when(cxCurrDao.findByCode("BBB")).thenReturn(cxCurr);
 		List<PredictionDto> predictions = generatePredictions();
 		when(predictionDao.findBetweenDates(eq(cxCurr), any(), any())).thenReturn(predictions);
@@ -182,7 +184,7 @@ class IntradaySimulationServiceTest {
 
 	private List<PredictionDto> generatePredictions() {
 		List<PredictionDto> items = new ArrayList<>();
-		Random r = new Random();
+		RandomGenerator r = RandomGeneratorFactory.getDefault().create();
 		LocalDateTime currTime = LocalDateTime.now().withMinute(0);
 
 		for (int i = 0; i < 96; i++) {
@@ -202,15 +204,13 @@ class IntradaySimulationServiceTest {
 
 	private List<PredictionSuccessDto> buildSuccessList(List<PredictionDto> predictions) {
 		List<PredictionSuccessDto> items = new ArrayList<>();
-		Random r = new Random();
+		RandomGenerator r = RandomGeneratorFactory.getDefault().create();
 
 		// Simply to make sure that all samples and advances from predictions exist in
 		// predictionSuccess
 		for (PredictionDto prediction : predictions) {
-			PredictionSuccessDto item = new PredictionSuccessDto();
-			item.setAdvance(prediction.getAdvance());
-			item.setSampleSize(prediction.getSampleSize());
-			item.setSuccess(r.nextDouble());
+			PredictionSuccessDto item = new PredictionSuccessDto(null, prediction.getSampleSize(),
+					prediction.getAdvance(), r.nextDouble());
 			items.add(item);
 		}
 
