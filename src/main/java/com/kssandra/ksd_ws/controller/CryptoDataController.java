@@ -26,7 +26,7 @@ import com.kssandra.ksd_ws.service.IntradayDataService;
  *
  */
 @RestController
-@CrossOrigin(origins = "http://localhost:8081")
+@CrossOrigin(origins = { "http://localhost:8081", "http://ksd-prediction.sytes.net" })
 @RequestMapping("/api/v1")
 public class CryptoDataController {
 
