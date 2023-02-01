@@ -73,7 +73,7 @@ Simula una inversión concreta en una criptodivisa<br>Requiere especificar acces
 
  ### **Sugerencias de inversión**<br>
 Proporciona las mejores opciones de inversión a corto plazo<br>Requiere especificar access token de manera obligatoria.<br>
-**URL**: /api/v1/intraday/simulate (POST)
+**URL**: /api/v1/intraday/suggest (POST)
   ##### Parámetros request
 	- exCurr: Código de la divisa para la conversión. Ejemplo: "EUR"
   ##### Parámetros response
