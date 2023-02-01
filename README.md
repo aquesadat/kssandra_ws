@@ -7,11 +7,11 @@ Los servicios están securizados con [Keycloak](https://www.keycloak.org/ "keycl
 
 ## Servicios expuestos
 
-- **Obtención de access token**<br>
+ ### **Obtención de access token**<br>
 Necesario para invocar al resto de endpoints puesto que a través de este se realiza la autenticación y autorización usuario.<br>
 **URL**: /auth/realms/KsdServiceRealm/protocol/openid-connect/token <br><br>
 
-- **Obtención de datos actuales**<br>
+ ### **Obtención de datos actuales**<br>
 Proporciona datos actuales de cotización para una criptodivisa en las últimas 24h en orden cronológico.<br>Requiere especificar access token de manera obligatoria.<br>
 **URL**: /api/v1/intraday/data (POST)
   ##### Parámetros request
@@ -30,9 +30,10 @@ Proporciona datos actuales de cotización para una criptodivisa en las últimas 
 		- high: Valor máximo. Solo si extended=true
 		- low: Valor mínimo. Solo si extended=true
 		- avg: Valor medio. Solo si extended=false
-    <br>
+    
 
-- **Obtención de predicciones de precios**<br>
+
+ ### **Obtención de predicciones de precios**<br>
 Proporciona predicciones de precios de una criptodivisa para las próximas 24h en order cronológico.<br>Requiere especificar access token de manera obligatoria.<br>
 **URL**: /api/v1/intraday/prediction (POST)
   ##### Parámetros request
@@ -46,9 +47,10 @@ Proporciona predicciones de precios de una criptodivisa para las próximas 24h e
 		- dateTime: Fecha y hora de la predicción.
 		- expectedVal: Valor esperado.
 		- success: Probabilidad en % de que se cumpla la predicción
-    <br>
+    
 
-- **Simulación de precios a corto plazo**<br>
+
+ ### **Simulación de precios a corto plazo**<br>
 Simula una inversión concreta en una criptodivisa<br>Requiere especificar access token de manera obligatoria.<br>
 **URL**: /api/v1/intraday/simulate (POST)
   ##### Parámetros request
@@ -66,9 +68,10 @@ Simula una inversión concreta en una criptodivisa<br>Requiere especificar acces
 		- expectedVal: Valor esperado.
 		- success: Probabilidad en % de que se cumpla la predicción
 		- profit: Beneficio o pérdida expresado en %
-    <br>
+    
 
-- **Sugerencias de inversión**<br>
+
+ ### **Sugerencias de inversión**<br>
 Proporciona las mejores opciones de inversión a corto plazo<br>Requiere especificar access token de manera obligatoria.<br>
 **URL**: /api/v1/intraday/simulate (POST)
   ##### Parámetros request
@@ -83,4 +86,4 @@ Proporciona las mejores opciones de inversión a corto plazo<br>Requiere especif
 		- expectedVal: Valor esperado.
 		- expectedRaise: Incremento esperado en %
 		- success: Probabilidad en % de que se cumpla la predicción
-    <br>
+    
