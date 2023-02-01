@@ -12,16 +12,16 @@ Necesario para invocar al resto de endpoints puesto que a través de este se rea
 **URL**: /auth/realms/KsdServiceRealm/protocol/openid-connect/token <br><br>
 
 - **Obtención de datos actuales**<br>
-Devuelve los datos actuales de cotización para una criptodivisa en las últimas 24h en orden cronológico.<br>Requiere especificar access token de manera obligatoria.<br>
+Proporciona datos actuales de cotización para una criptodivisa en las últimas 24h en orden cronológico.<br>Requiere especificar access token de manera obligatoria.<br>
 **URL**: /api/v1/intraday/data (POST)
   ##### Parámetros request
-	- cxCurr: Código de la cryptomoneda. Ejemplo: "BTC"
+	- cxCurr: Código de la criptomoneda. Ejemplo: "BTC"
 	- exCurr: Código de la divisa para la conversión. Ejemplo: "EUR"
 	- interval: Intervalo de tiempo entre resultados (M15: 15min, M60: 60min)
 	- extended: Muestra información extendida en la respuesta. (true/false)
   
   ##### Parámetros response
-	- cxCurr: Código de la cryptomoneda.
+	- cxCurr: Código de la criptomoneda.
 	- exCurr: Código de la divisa para la conversión.
 	- items: Listado de elementos.
 		- dateTime: Fecha y hora de la cotización.
@@ -33,18 +33,18 @@ Devuelve los datos actuales de cotización para una criptodivisa en las últimas
     <br>
 
 - **Obtención de predicciones de precios**<br>
-Devuelve predicciones de precios de una criptodivisa para las próximas 24h en order cronológico.<br>Requiere especificar access token de manera obligatoria.<br>
+Proporciona predicciones de precios de una criptodivisa para las próximas 24h en order cronológico.<br>Requiere especificar access token de manera obligatoria.<br>
 **URL**: /api/v1/intraday/prediction (POST)
   ##### Parámetros request
-	- cxCurr: Código de la cryptomoneda. Ejemplo: "BTC"
+	- cxCurr: Código de la criptomoneda. Ejemplo: "BTC"
 	- exCurr: Código de la divisa para la conversión. Ejemplo: "EUR"
 	- interval: Intervalo de tiempo entre resultados (M15: 15min, M60: 60min)
   ##### Parámetros response
-	- cxCurr: Código de la cryptomoneda.
+	- cxCurr: Código de la criptomoneda.
 	- exCurr: Código de la divisa para la conversión.
 	- items: Listado de elementos.
 		- dateTime: Fecha y hora de la predicción.
-		- expectedVal: Precio esperado.
+		- expectedVal: Valor esperado.
 		- success: Probabilidad en % de que se cumpla la predicción
     <br>
 
@@ -52,18 +52,35 @@ Devuelve predicciones de precios de una criptodivisa para las próximas 24h en o
 Simula una inversión concreta en una criptodivisa<br>Requiere especificar access token de manera obligatoria.<br>
 **URL**: /api/v1/intraday/simulate (POST)
   ##### Parámetros request
-	- cxCurr: Código de la cryptomoneda. Ejemplo: "BTC"
+	- cxCurr: Código de la criptomoneda. Ejemplo: "BTC"
 	- exCurr: Código de la divisa para la conversión. Ejemplo: "EUR"
 	- interval: Intervalo de tiempo entre resultados (M15: 15min, M60: 60min)
 	- amount: Cantidad de dinero a invertir
 	- saleFee: Comisión de compra aplicada por el broker (Opcional)
 	- purchaseFee: Comisión de venta aplicada por el broker (Opcional)
   ##### Parámetros response
-	- cxCurr: Código de la cryptomoneda.
+	- cxCurr: Código de la criptomoneda.
 	- exCurr: Código de la divisa para la conversión.
 	- items: Listado de elementos.
 		- dateTime: Fecha y hora de la predicción.
-		- expectedVal: Precio esperado.
+		- expectedVal: Valor esperado.
 		- success: Probabilidad en % de que se cumpla la predicción
 		- profit: Beneficio o pérdida expresado en %
+    <br>
+
+- **Sugerencias de inversión**<br>
+Proporciona las mejores opciones de inversión a corto plazo<br>Requiere especificar access token de manera obligatoria.<br>
+**URL**: /api/v1/intraday/simulate (POST)
+  ##### Parámetros request
+	- exCurr: Código de la divisa para la conversión. Ejemplo: "EUR"
+  ##### Parámetros response
+	- exCurr: Código de la divisa para la conversión.
+	- items: Listado de elementos.
+		- rank: Posición en el ranking de criptodivisas recomendadas
+		- cxCurr: Código de la criptomoneda.
+		- cxCurrDesc: Nombre de la criptomoneda
+		- currVal: Valor actual
+		- expectedVal: Valor esperado.
+		- expectedRaise: Incremento esperado en %
+		- success: Probabilidad en % de que se cumpla la predicción
     <br>
