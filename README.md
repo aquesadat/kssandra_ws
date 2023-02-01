@@ -32,4 +32,18 @@ Devuelve los datos actuales de cotización para una criptomoneda en las últimas
 		- avg: Valor medio. Solo si extended=false
     <br>
 
-
+- **Obtención de predicciones de precios**<br>
+Devuelve predicciones de precios de una criptomoneda para las próximas 24h en order cronológico.<br>Requiere especificar access token de manera obligatoria.<br>
+**URL**: /api/v1/intraday/prediction (POST)
+  ##### Parámetros request
+	- cxCurr: Código de la cryptomoneda. Ejemplo: "BTC"
+	- exCurr: Código de la divisa para la conversión. Ejemplo: "EUR"
+	- interval: Intervalo de tiempo entre resultados (M15: 15min, M60: 60min)
+  ##### Parámetros response
+	- cxCurr: Código de la cryptomoneda.
+	- exCurr: Código de la divisa para la conversión.
+	- items: Listado de elementos.
+		- dateTime: Fecha y hora de la predicción.
+		- expectedVal: Precio esperado.
+		- success: Probabilidad en % de que se cumpla la predicción
+    <br>
