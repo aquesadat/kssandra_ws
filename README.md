@@ -1,4 +1,4 @@
-# kssandra_task
+# kssandra_ws
 
 ## Descripción
 Aplicación Java basada en SpringBoot que proporciona una API REST para consultar información relevatante para la inversión en criptodivisas como: datos actuales de cotización, predicciones a corto plazo, sugerencias y simulaciones de inversión.
