@@ -12,11 +12,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
@@ -39,6 +43,9 @@ import com.kssandra.ksd_ws.response.IntradayDataResponseItem;
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestPropertySource(locations = "classpath:application-integrationtest.properties")
 @AutoConfigureMockMvc(addFilters = false)
+@ComponentScan({ "com.kssandra" })
+@EntityScan("com.kssandra.ksd_persistence.domain")
+@EnableJpaRepositories("com.kssandra.ksd_ws.repository")
 class CryptoDataControllerIntegrationTest {
 
 	/** The test client. */
@@ -52,6 +59,8 @@ class CryptoDataControllerIntegrationTest {
 	/** The Constant urlEndpoint. */
 	private static final String urlEndpoint = "/api/v1/intraday/data";
 
+	IntradayDataRequest intraRq;
+
 	/**
 	 * Update data.
 	 */
@@ -63,22 +72,24 @@ class CryptoDataControllerIntegrationTest {
 		cxData = cxData.stream().map(elem -> updateReadTime(elem)).collect(Collectors.toList());
 
 		cxDataTestRepository.saveAll(cxData);
-	}
 
-	/**
-	 * Test method for getIntraDayData with any kind of KO response
-	 *
-	 * @throws Exception the exception
-	 */
-	@Test
-	void testGetIntraDayDataKO() throws Exception {
-
-		IntradayDataRequest intraRq = new IntradayDataRequest();
+		intraRq = new IntradayDataRequest();
+		intraRq.setCxCurr(CryptoCurrEnum.BTC.getValue());
 		intraRq.setExCurr(ExchangeCurrEnum.EUR.getValue());
 		intraRq.setExtended(false);
 		intraRq.setInterval(IntervalEnum.M15.getName());
+	}
 
-		// Bad Request - CxCurr
+	/**
+	 * Test method for getIntraDayData with bad request response (cxCurr)
+	 * {@link com.kssandra.ksd_ws.controller.CryptoDataController#getIntraDayData(com.kssandra.ksd_ws.request.IntradayDataRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
+	 * 
+	 * @throws Exception the exception
+	 */
+	@Test
+	@DisplayName("Integration-CxData. BadRQ cxCurr")
+	void testGetIntraDayDataCxCurrBadRequest() throws Exception {
+
 		intraRq.setCxCurr(null);
 		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
 				.expectStatus().isBadRequest().expectBody().jsonPath("message", "cxCurr - Missing field value");
@@ -86,9 +97,18 @@ class CryptoDataControllerIntegrationTest {
 		intraRq.setCxCurr("XXX");
 		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
 				.expectStatus().isBadRequest().expectBody().jsonPath("message", "cxCurr - Invalid field value");
+	}
 
-		// Bad Request - exCurr
-		intraRq.setCxCurr(CryptoCurrEnum.ADA.getValue());
+	/**
+	 * Test method for getIntraDayData with bad request response (exCurr)
+	 * {@link com.kssandra.ksd_ws.controller.CryptoDataController#getIntraDayData(com.kssandra.ksd_ws.request.IntradayDataRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
+	 * 
+	 * @throws Exception the exception
+	 */
+	@Test
+	@DisplayName("Integration-CxData. BadRQ exCurr")
+	void testGetIntraDayDataExCurrBadRequest() throws Exception {
+
 		intraRq.setExCurr(null);
 		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
 				.expectStatus().isBadRequest().expectBody().jsonPath("message", "exCurr - Missing field value");
@@ -96,9 +116,18 @@ class CryptoDataControllerIntegrationTest {
 		intraRq.setExCurr("XXX");
 		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
 				.expectStatus().isBadRequest().expectBody().jsonPath("message", "exCurr - Invalid field value");
+	}
 
-		// Bad Request - Interval
-		intraRq.setExCurr(ExchangeCurrEnum.EUR.getValue());
+	/**
+	 * Test method for getIntraDayData with bad request response (interval)
+	 * {@link com.kssandra.ksd_ws.controller.CryptoDataController#getIntraDayData(com.kssandra.ksd_ws.request.IntradayDataRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
+	 * 
+	 * @throws Exception the exception
+	 */
+	@Test
+	@DisplayName("Integration-CxData. BadRQ interval")
+	void testGetIntraDayDataIntervalBadRequest() throws Exception {
+
 		intraRq.setInterval(null);
 		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
 				.expectStatus().isBadRequest().expectBody().jsonPath("message", "interval - Missing field value");
@@ -106,9 +135,18 @@ class CryptoDataControllerIntegrationTest {
 		intraRq.setInterval("XXX");
 		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
 				.expectStatus().isBadRequest().expectBody().jsonPath("message", "interval - Invalid field value");
+	}
 
-		// Conflict - Custom Exception
-		intraRq.setInterval(IntervalEnum.M15.getName());
+	/**
+	 * Test method for getIntraDayData with custom exception
+	 * {@link com.kssandra.ksd_ws.controller.CryptoDataController#getIntraDayData(com.kssandra.ksd_ws.request.IntradayDataRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
+	 * 
+	 * @throws Exception the exception
+	 */
+	@Test
+	@DisplayName("Integration-CxData. Custom Exception")
+	void testGetIntraDayDataCustomEx() throws Exception {
+
 		intraRq.setCxCurr(CryptoCurrEnum.ETH.getValue());
 		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
 				.expectStatus().isEqualTo(HttpStatus.CONFLICT);
@@ -116,23 +154,30 @@ class CryptoDataControllerIntegrationTest {
 	}
 
 	/**
-	 * Test method for getIntraDayData with OK response
-	 *
+	 * Test method for getIntraDayData with no price data stored
+	 * {@link com.kssandra.ksd_ws.controller.CryptoDataController#getIntraDayData(com.kssandra.ksd_ws.request.IntradayDataRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
+	 * 
 	 * @throws Exception the exception
 	 */
 	@Test
-	void testGetIntraDayDataOK() throws Exception {
+	@DisplayName("Integration-CxData. No price data stored")
+	void testGetIntraDayDataNoPriceData() throws Exception {
 
-		IntradayDataRequest intraRq = new IntradayDataRequest();
-		intraRq.setCxCurr(CryptoCurrEnum.BTC.getValue());
-		intraRq.setExCurr(ExchangeCurrEnum.EUR.getValue());
-		intraRq.setExtended(false);
-		intraRq.setInterval(IntervalEnum.M15.getName());
-
-		// No price data stored in DB for the crypto currency
 		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
 				.expectStatus().isOk().expectBody().jsonPath("cxCurr").isEqualTo(CryptoCurrEnum.BTC.getValue())
 				.jsonPath("exCurr").isEqualTo(ExchangeCurrEnum.EUR.getValue()).jsonPath("items").isEmpty();
+
+	}
+
+	/**
+	 * Test method for getIntraDayData with OK short response
+	 * {@link com.kssandra.ksd_ws.controller.CryptoDataController#getIntraDayData(com.kssandra.ksd_ws.request.IntradayDataRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
+	 * 
+	 * @throws Exception the exception
+	 */
+	@Test
+	@DisplayName("Integration-CxData. Short OK response")
+	void testGetIntraDayDataOKShortResponse() throws Exception {
 
 		// The crypto currency has price data stored in DB
 		intraRq.setCxCurr(CryptoCurrEnum.ADA.getValue());
@@ -161,6 +206,20 @@ class CryptoDataControllerIntegrationTest {
 						assertNotNull(item.getAvg());
 					}
 				});
+
+	}
+
+	/**
+	 * Test method for getIntraDayData with OK extended response
+	 * {@link com.kssandra.ksd_ws.controller.CryptoDataController#getIntraDayData(com.kssandra.ksd_ws.request.IntradayDataRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
+	 * 
+	 * @throws Exception the exception
+	 */
+	@Test
+	void testGetIntraDayDataOKExtendResponse() throws Exception {
+
+		// The crypto currency has price data stored in DB
+		intraRq.setCxCurr(CryptoCurrEnum.ADA.getValue());
 
 		// Extended response
 		intraRq.setExtended(true);

@@ -13,11 +13,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
@@ -43,6 +47,9 @@ import com.kssandra.ksd_ws.response.IntradayPredictionResponseItem;
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestPropertySource(locations = "classpath:application-integrationtest.properties")
 @AutoConfigureMockMvc(addFilters = false)
+@ComponentScan({ "com.kssandra" })
+@EntityScan("com.kssandra.ksd_persistence.domain")
+@EnableJpaRepositories("com.kssandra.ksd_ws.repository")
 class PredictionControllerIntegrationTest {
 
 	@Autowired
@@ -54,6 +61,8 @@ class PredictionControllerIntegrationTest {
 
 	private static final String urlEndpoint = "/api/v1/intraday/prediction";
 
+	IntradayPredictionRequest intraRq;
+
 	@BeforeEach
 	private void updateData() {
 		List<Prediction> cxPredict = cxPredictTestRepository.findAll();
@@ -62,19 +71,23 @@ class PredictionControllerIntegrationTest {
 		cxPredict = cxPredict.stream().map(elem -> updateReadTime(elem)).collect(Collectors.toList());
 
 		cxPredictTestRepository.saveAll(cxPredict);
+
+		intraRq = new IntradayPredictionRequest();
+		intraRq.setCxCurr(CryptoCurrEnum.BTC.getValue());
+		intraRq.setExCurr(ExchangeCurrEnum.EUR.getValue());
+		intraRq.setInterval(IntervalEnum.M15.getName());
 	}
 
 	/**
-	 * Test method for getIntraDayData with any kind of KO response
+	 * Test method for getIntraDayData with bad request response (cxCurr)
+	 * {@link com.kssandra.ksd_ws.controller.PredictionController#getIntraDayData(com.kssandra.ksd_ws.request.IntradayPredictionRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
+	 * 
+	 * @throws Exception the exception
 	 */
 	@Test
-	void testGetIntraDayDataKO() {
+	@DisplayName("Integration-Predict. BadRQ cxCurr")
+	void testGetIntraDayDataCxCurrBadRequest() throws Exception {
 
-		IntradayPredictionRequest intraRq = new IntradayPredictionRequest();
-		intraRq.setExCurr(ExchangeCurrEnum.EUR.getValue());
-		intraRq.setInterval(IntervalEnum.M15.getName());
-
-		// Bad Request - CxCurr
 		intraRq.setCxCurr(null);
 		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
 				.expectStatus().isBadRequest().expectBody().jsonPath("message", "cxCurr - Missing field value");
@@ -82,9 +95,18 @@ class PredictionControllerIntegrationTest {
 		intraRq.setCxCurr("XXX");
 		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
 				.expectStatus().isBadRequest().expectBody().jsonPath("message", "cxCurr - Invalid field value");
+	}
 
-		// Bad Request - exCurr
-		intraRq.setCxCurr(CryptoCurrEnum.ADA.getValue());
+	/**
+	 * Test method for getIntraDayData with bad request response (exCurr)
+	 * {@link com.kssandra.ksd_ws.controller.PredictionController#getIntraDayData(com.kssandra.ksd_ws.request.IntradayPredictionRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
+	 * 
+	 * @throws Exception the exception
+	 */
+	@Test
+	@DisplayName("Integration-Predict. BadRQ exCurr")
+	void testGetIntraDayDataExCurrBadRequest() throws Exception {
+
 		intraRq.setExCurr(null);
 		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
 				.expectStatus().isBadRequest().expectBody().jsonPath("message", "exCurr - Missing field value");
@@ -92,9 +114,18 @@ class PredictionControllerIntegrationTest {
 		intraRq.setExCurr("XXX");
 		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
 				.expectStatus().isBadRequest().expectBody().jsonPath("message", "exCurr - Invalid field value");
+	}
 
-		// Bad Request - Interval
-		intraRq.setExCurr(ExchangeCurrEnum.EUR.getValue());
+	/**
+	 * Test method for getIntraDayData with bad request response (interval)
+	 * {@link com.kssandra.ksd_ws.controller.PredictionController#getIntraDayData(com.kssandra.ksd_ws.request.IntradayPredictionRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
+	 * 
+	 * @throws Exception the exception
+	 */
+	@Test
+	@DisplayName("Integration-Predict. BadRQ interval")
+	void testGetIntraDayDataIntervalBadRequest() throws Exception {
+
 		intraRq.setInterval(null);
 		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
 				.expectStatus().isBadRequest().expectBody().jsonPath("message", "interval - Missing field value");
@@ -102,31 +133,48 @@ class PredictionControllerIntegrationTest {
 		intraRq.setInterval("XXX");
 		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
 				.expectStatus().isBadRequest().expectBody().jsonPath("message", "interval - Invalid field value");
+	}
 
-		// Conflict - Custom Exception
-		intraRq.setInterval(IntervalEnum.M15.getName());
+	/**
+	 * Test method for getIntraDayData with custom exception
+	 * {@link com.kssandra.ksd_ws.controller.PredictionController#getIntraDayData(com.kssandra.ksd_ws.request.IntradayPredictionRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
+	 * 
+	 * @throws Exception the exception
+	 */
+	@Test
+	@DisplayName("Integration-Predict. Custom Exception")
+	void testGetIntraDayDataCustomEx() throws Exception {
+
 		intraRq.setCxCurr(CryptoCurrEnum.ETH.getValue());
 		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
 				.expectStatus().isEqualTo(HttpStatus.CONFLICT);
+
+	}
+
+	/**
+	 * Test method for getIntraDayData with no price data stored
+	 * {@link com.kssandra.ksd_ws.controller.PredictionController#getIntraDayData(com.kssandra.ksd_ws.request.IntradayPredictionRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
+	 * 
+	 * @throws Exception the exception
+	 */
+	@Test
+	@DisplayName("Integration-Prediction. No price data stored")
+	void testGetIntraDayDataNoPriceData() throws Exception {
+
+		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
+				.expectStatus().isOk().expectBody().jsonPath("cxCurr").isEqualTo(CryptoCurrEnum.BTC.getValue())
+				.jsonPath("exCurr").isEqualTo(ExchangeCurrEnum.EUR.getValue()).jsonPath("items").isEmpty();
+
 	}
 
 	/**
 	 * Test method for getIntraDayData with OK response
-	 *
+	 * {@link com.kssandra.ksd_ws.controller.PredictionController#getIntraDayData(com.kssandra.ksd_ws.request.IntradayPredictionRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
+	 * 
 	 * @throws Exception the exception
 	 */
 	@Test
 	void testGetIntraDayDataOK() throws Exception {
-
-		IntradayPredictionRequest intraRq = new IntradayPredictionRequest();
-		intraRq.setCxCurr(CryptoCurrEnum.BTC.getValue());
-		intraRq.setExCurr(ExchangeCurrEnum.EUR.getValue());
-		intraRq.setInterval(IntervalEnum.M15.getName());
-
-		// No prediction data stored in DB for the crypto currency
-		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
-				.expectStatus().isOk().expectBody().jsonPath("cxCurr").isEqualTo(CryptoCurrEnum.BTC.getValue())
-				.jsonPath("exCurr").isEqualTo(ExchangeCurrEnum.EUR.getValue()).jsonPath("items").isEmpty();
 
 		// The crypto currency has prediction data stored in DB
 		intraRq.setCxCurr(CryptoCurrEnum.ADA.getValue());

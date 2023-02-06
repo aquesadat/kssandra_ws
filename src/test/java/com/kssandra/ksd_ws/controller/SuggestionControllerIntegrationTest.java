@@ -15,11 +15,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -41,6 +45,9 @@ import com.kssandra.ksd_ws.service.IntradaySuggestionService;
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestPropertySource(locations = "classpath:application-integrationtest.properties")
 @AutoConfigureMockMvc(addFilters = false)
+@ComponentScan({ "com.kssandra" })
+@EntityScan("com.kssandra.ksd_persistence.domain")
+@EnableJpaRepositories("com.kssandra.ksd_ws.repository")
 class SuggestionControllerIntegrationTest {
 
 	@Autowired
@@ -52,6 +59,8 @@ class SuggestionControllerIntegrationTest {
 
 	private static final String urlEndpoint = "/api/v1/intraday/suggest";
 
+	IntradaySuggestionRequest intraRq;
+
 	@BeforeEach
 	private void updateData() {
 		List<Prediction> cxPredict = cxPredictTestRepository.findAll();
@@ -60,17 +69,20 @@ class SuggestionControllerIntegrationTest {
 		cxPredict = cxPredict.stream().map(elem -> updateReadTime(elem)).collect(Collectors.toList());
 
 		cxPredictTestRepository.saveAll(cxPredict);
+
+		intraRq = new IntradaySuggestionRequest();
 	}
 
 	/**
-	 * Test method for getIntraDayData with any kind of KO response
+	 * Test method for getIntraDayData with bad request response (exCurr)
 	 * {@link com.kssandra.ksd_ws.controller.SuggestionController#getIntraDayData(com.kssandra.ksd_ws.request.IntradaySuggestionRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
+	 * 
+	 * @throws Exception the exception
 	 */
 	@Test
-	void testGetIntraDayDataKO() {
-		IntradaySuggestionRequest intraRq = new IntradaySuggestionRequest();
+	@DisplayName("Integration-Suggestion. BadRQ exCurr")
+	void testGetIntraDayDataExCurrBadRequest() throws Exception {
 
-		// Bad Request - exCurr
 		intraRq.setExCurr(null);
 		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
 				.expectStatus().isBadRequest().expectBody().jsonPath("message", "exCurr - Missing field value");
@@ -78,9 +90,18 @@ class SuggestionControllerIntegrationTest {
 		intraRq.setExCurr("XXX");
 		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
 				.expectStatus().isBadRequest().expectBody().jsonPath("message", "exCurr - Invalid field value");
+	}
 
-		// Bad Request - numResult
-		intraRq.setExCurr(ExchangeCurrEnum.EUR.getValue());
+	/**
+	 * Test method for getIntraDayData with bad request response (num result)
+	 * {@link com.kssandra.ksd_ws.controller.SuggestionController#getIntraDayData(com.kssandra.ksd_ws.request.IntradaySuggestionRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
+	 * 
+	 * @throws Exception the exception
+	 */
+	@Test
+	@DisplayName("Integration-Suggestion. BadRQ numResult")
+	void testGetIntraDayDataNumResultBadRequest() throws Exception {
+
 		intraRq.setNumResult(0);
 		testClient.post().uri(urlEndpoint).contentType(MediaType.APPLICATION_JSON).bodyValue(intraRq).exchange()
 				.expectStatus().isBadRequest().expectBody().jsonPath("message", "numResult - Invalid field value");
