@@ -158,6 +158,7 @@ class IntradayDataServiceTest {
 
 			assertNull(item.getAvg());
 			assertNotNull(item.getDateTime());
+
 		}
 	}
 
