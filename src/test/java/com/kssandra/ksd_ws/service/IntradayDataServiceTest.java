@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -54,28 +55,55 @@ class IntradayDataServiceTest {
 	 * @throws KsdServiceException
 	 */
 	@Test
-	void testGetData() throws KsdServiceException {
-
+	@DisplayName("CxData - Cx not configured")
+	void testGetDataCxNotConfigured() throws KsdServiceException {
 		// Crypto currency not configured in DB
 		when(cxCurrDao.findByCode("XXX")).thenReturn(null);
+
 		assertThrows(KsdServiceException.class,
 				() -> indradayDataService.getData(buildIntraRq("XXX", null, false, null)));
+	}
 
+	/**
+	 * Test method for
+	 * {@link com.kssandra.ksd_ws.service.IntradayDataService#getData(com.kssandra.ksd_ws.request.IntradayDataRequest)}.
+	 * 
+	 * @throws KsdServiceException
+	 */
+	@Test
+	@DisplayName("CxData - Price not stored")
+	void testGetDataPriceNotStored() throws KsdServiceException {
 		// No price data stored in DB for the crypto currency
 		CryptoCurrencyDto cxCurr = new CryptoCurrencyDto("AAA");
+
 		when(cxCurrDao.findByCode("AAA")).thenReturn(cxCurr);
 		when(cryptoDataDao.findAfterDate(eq(cxCurr), any())).thenReturn(new ArrayList<CryptoDataDto>());
+
 		IntradayDataResponse response = indradayDataService.getData(buildIntraRq("AAA", "EUR", false, "M15"));
+
 		assertEquals("AAA", response.getCxCurr());
 		assertEquals("EUR", response.getExCurr());
 		assertTrue(response.getItems().isEmpty());
+	}
+
+	/**
+	 * Test method for
+	 * {@link com.kssandra.ksd_ws.service.IntradayDataService#getData(com.kssandra.ksd_ws.request.IntradayDataRequest)}.
+	 * 
+	 * @throws KsdServiceException
+	 */
+	@Test
+	void testGetDataShortResponse() throws KsdServiceException {
 
 		// The crypto currency has price data stored in DB
-		cxCurr = new CryptoCurrencyDto("BBB");
+		CryptoCurrencyDto cxCurr = new CryptoCurrencyDto("BBB");
 		String rqInterval = "M15";
+
 		when(cxCurrDao.findByCode("BBB")).thenReturn(cxCurr);
 		when(cryptoDataDao.findAfterDate(eq(cxCurr), any())).thenReturn(buildItemList());
-		response = indradayDataService.getData(buildIntraRq("BBB", "EUR", false, rqInterval));
+
+		IntradayDataResponse response = indradayDataService.getData(buildIntraRq("BBB", "EUR", false, rqInterval));
+
 		assertEquals("BBB", response.getCxCurr());
 		assertEquals("EUR", response.getExCurr());
 		IntervalEnum interval = IntervalEnum.valueOf(rqInterval);
@@ -97,9 +125,28 @@ class IntradayDataServiceTest {
 			assertNotNull(item.getAvg());
 		}
 
+	}
+
+	/**
+	 * Test method for
+	 * {@link com.kssandra.ksd_ws.service.IntradayDataService#getData(com.kssandra.ksd_ws.request.IntradayDataRequest)}.
+	 * 
+	 * @throws KsdServiceException
+	 */
+	@Test
+	void testGetDataExtendedResponse() throws KsdServiceException {
+
+		CryptoCurrencyDto cxCurr = new CryptoCurrencyDto("BBB");
+		String rqInterval = "M15";
+
+		when(cxCurrDao.findByCode("BBB")).thenReturn(cxCurr);
+		when(cryptoDataDao.findAfterDate(eq(cxCurr), any())).thenReturn(buildItemList());
+
+		IntradayDataResponse response = indradayDataService.getData(buildIntraRq("BBB", "EUR", false, rqInterval));
+
 		// Extended response
 		response = indradayDataService.getData(buildIntraRq("BBB", "EUR", true, rqInterval));
-		items = response.getItems();
+		List<IntradayDataResponseItem> items = response.getItems();
 		assertNotNull(items);
 		assertFalse(items.isEmpty());
 		for (IntradayDataResponseItem item : items) {
@@ -112,7 +159,6 @@ class IntradayDataServiceTest {
 			assertNull(item.getAvg());
 			assertNotNull(item.getDateTime());
 		}
-
 	}
 
 	private List<CryptoDataDto> buildItemList() {

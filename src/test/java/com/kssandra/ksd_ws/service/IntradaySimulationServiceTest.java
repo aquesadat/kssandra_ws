@@ -17,6 +17,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -72,66 +73,238 @@ class IntradaySimulationServiceTest {
 	 * @throws KsdServiceException
 	 */
 	@Test
-	void testGetSimulation() throws KsdServiceException {
+	@DisplayName("Simulation - Cx not configured")
+	void testGetSimulationCxNotConfigured() throws KsdServiceException {
 
 		// Crypto currency not configured in DB
 		when(cxCurrDao.findByCode("XXX")).thenReturn(null);
+
 		assertThrows(KsdServiceException.class,
 				() -> intradaySimulationService.getSimulation(buildIntraRq("XXX", null, null, null, null)));
+
+	}
+
+	/**
+	 * Test method for getSimulation
+	 * {@link com.kssandra.ksd_ws.service.IntradaySimulationService#getSimulation(com.kssandra.ksd_ws.request.IntradaySimulationRequest)}.
+	 * 
+	 * @throws KsdServiceException
+	 */
+	@Test
+	@DisplayName("Simulation - Rq datetime invalid")
+	void testGetSimulationInvalidRqDatetime() throws KsdServiceException {
 
 		// Request dateTime is not valid (more than 24h)
 		LocalDateTime rqDateTime = LocalDateTime.now().plusDays(2);
 		CryptoCurrencyDto cxCurr = new CryptoCurrencyDto("AAA");
 		when(cxCurrDao.findByCode("AAA")).thenReturn(cxCurr);
+
 		assertThrows(KsdServiceException.class,
 				() -> intradaySimulationService.getSimulation(buildIntraRq("AAA", "EUR", "M15", rqDateTime, null)));
 
+	}
+
+	/**
+	 * Test method for getSimulation
+	 * {@link com.kssandra.ksd_ws.service.IntradaySimulationService#getSimulation(com.kssandra.ksd_ws.request.IntradaySimulationRequest)}.
+	 * 
+	 * @throws KsdServiceException
+	 */
+	@Test
+	@DisplayName("Simulation - Rq datetime not provided")
+	void testGetSimulationRqDatetimeNotProvided() throws KsdServiceException {
+
 		// Request dateTime is not provided
+		CryptoCurrencyDto cxCurr = new CryptoCurrencyDto("AAA");
+		when(cxCurrDao.findByCode("AAA")).thenReturn(cxCurr);
+
 		LocalDateTime beginTime = LocalDateTime.now();
 		intradaySimulationService.getSimulation(buildIntraRq("AAA", "EUR", "M15", null, null));
+
 		verify(predictionDao).findBetweenDates(eq(cxCurr), captorDateFrom.capture(), captorDateTo.capture());
 		assertTrue(ChronoUnit.SECONDS.between(beginTime, captorDateFrom.getValue()) < 10);
 		assertEquals(24, ChronoUnit.HOURS.between(captorDateFrom.getValue(), captorDateTo.getValue()));
+	}
+
+	/**
+	 * Test method for getSimulation
+	 * {@link com.kssandra.ksd_ws.service.IntradaySimulationService#getSimulation(com.kssandra.ksd_ws.request.IntradaySimulationRequest)}.
+	 * 
+	 * @throws KsdServiceException
+	 */
+	@Test
+	@DisplayName("Simulation - Rq datetime provided")
+	void testGetSimulationRqDatetimeProvided() throws KsdServiceException {
 
 		// Request dateTime is provided
-		beginTime = LocalDateTime.now().withSecond(0).withNano(0).plusHours(1);
+		LocalDateTime beginTime = LocalDateTime.now().withSecond(0).withNano(0).plusHours(1);
+		CryptoCurrencyDto cxCurr = new CryptoCurrencyDto("AAA");
+		when(cxCurrDao.findByCode("AAA")).thenReturn(cxCurr);
+
 		intradaySimulationService.getSimulation(buildIntraRq("AAA", "EUR", "M15", beginTime, null));
+
 		verify(predictionDao).findBetweenDates(eq(cxCurr), eq(beginTime), captorDateTo.capture());
 		assertEquals(24, ChronoUnit.HOURS.between(beginTime, captorDateTo.getValue()));
+	}
+
+	/**
+	 * Test method for getSimulation
+	 * {@link com.kssandra.ksd_ws.service.IntradaySimulationService#getSimulation(com.kssandra.ksd_ws.request.IntradaySimulationRequest)}.
+	 * 
+	 * @throws KsdServiceException
+	 */
+	@Test
+	@DisplayName("Simulation - No prediction stored")
+	void testGetSimulationNoPredictionStored() throws KsdServiceException {
+
+		CryptoCurrencyDto cxCurr = new CryptoCurrencyDto("AAA");
 
 		// No prediction data stored in DB for the crypto currency
+		when(cxCurrDao.findByCode("AAA")).thenReturn(cxCurr);
 		when(predictionDao.findBetweenDates(eq(cxCurr), any(), any())).thenReturn(new ArrayList<PredictionDto>());
+
 		IntradaySimulationResponse response = intradaySimulationService
 				.getSimulation(buildIntraRq("AAA", "EUR", "M15", null, null));
+
 		assertEquals("AAA", response.getCxCurr());
 		assertEquals("EUR", response.getExCurr());
 		assertTrue(response.getItems().isEmpty());
 
+	}
+
+	/**
+	 * Test method for getSimulation
+	 * {@link com.kssandra.ksd_ws.service.IntradaySimulationService#getSimulation(com.kssandra.ksd_ws.request.IntradaySimulationRequest)}.
+	 * 
+	 * @throws KsdServiceException
+	 */
+	@Test
+	@DisplayName("Simulation - Prediction stored")
+	void testGetSimulationPredictionStored() throws KsdServiceException {
+
+		CryptoCurrencyDto cxCurr = new CryptoCurrencyDto("AAA");
+
+		// No prediction data stored in DB for the crypto currency
+		when(cxCurrDao.findByCode("AAA")).thenReturn(cxCurr);
+		when(predictionDao.findBetweenDates(eq(cxCurr), any(), any())).thenReturn(new ArrayList<PredictionDto>());
+
+		IntradaySimulationResponse response = intradaySimulationService
+				.getSimulation(buildIntraRq("AAA", "EUR", "M15", null, null));
+
+		assertEquals("AAA", response.getCxCurr());
+		assertEquals("EUR", response.getExCurr());
+		assertTrue(response.getItems().isEmpty());
+	}
+
+	/**
+	 * Test method for getSimulation
+	 * {@link com.kssandra.ksd_ws.service.IntradaySimulationService#getSimulation(com.kssandra.ksd_ws.request.IntradaySimulationRequest)}.
+	 * 
+	 * @throws KsdServiceException
+	 */
+	@Test
+	@DisplayName("Simulation - No evaluated past predictions")
+	void testGetSimulationNotEvaluated() throws KsdServiceException {
+
 		// The crypto currency has prediction data stored in DB
-		cxCurr = new CryptoCurrencyDto("BBB");
+		CryptoCurrencyDto cxCurr = new CryptoCurrencyDto("BBB");
 		when(cxCurrDao.findByCode("BBB")).thenReturn(cxCurr);
 		List<PredictionDto> predictions = generatePredictions();
-		when(predictionDao.findBetweenDates(eq(cxCurr), any(), any())).thenReturn(predictions);
+		String rqInterval = "M15";
 
 		// No evaluated past predictions is stored in DB for the crypto currency
+		when(predictionDao.findBetweenDates(eq(cxCurr), any(), any())).thenReturn(predictions);
 		when(predictionSuccessDao.findSuccess(cxCurr)).thenReturn(new ArrayList<PredictionSuccessDto>());
-		String rqInterval = "M15";
 		when(cxDataDao.getCurrVal(cxCurr)).thenReturn(4.58);
-		response = intradaySimulationService.getSimulation(buildIntraRq("BBB", "EUR", rqInterval, null, 45.3));
+
+		IntradaySimulationResponse response = intradaySimulationService
+				.getSimulation(buildIntraRq("BBB", "EUR", rqInterval, null, 45.3));
 		assertEquals("BBB", response.getCxCurr());
 		assertEquals("EUR", response.getExCurr());
 		assertNotNull(response.getItems());
 		assertFalse(response.getItems().isEmpty());
+	}
+
+	/**
+	 * Test method for getSimulation
+	 * {@link com.kssandra.ksd_ws.service.IntradaySimulationService#getSimulation(com.kssandra.ksd_ws.request.IntradaySimulationRequest)}.
+	 * 
+	 * @throws KsdServiceException
+	 */
+	@Test
+	@DisplayName("Simulation - Success N/A")
+	void testGetSimulationSuccessNA() throws KsdServiceException {
+
+		// The crypto currency has prediction data stored in DB
+		CryptoCurrencyDto cxCurr = new CryptoCurrencyDto("BBB");
+		when(cxCurrDao.findByCode("BBB")).thenReturn(cxCurr);
+		List<PredictionDto> predictions = generatePredictions();
+		String rqInterval = "M15";
+
+		// No evaluated past predictions is stored in DB for the crypto currency
+		when(predictionDao.findBetweenDates(eq(cxCurr), any(), any())).thenReturn(predictions);
+		when(predictionSuccessDao.findSuccess(cxCurr)).thenReturn(new ArrayList<PredictionSuccessDto>());
+		when(cxDataDao.getCurrVal(cxCurr)).thenReturn(4.58);
+
+		IntradaySimulationResponse response = intradaySimulationService
+				.getSimulation(buildIntraRq("BBB", "EUR", rqInterval, null, 45.3));
 
 		// All items has success="N/A" because there aren't evaluated past prediction
 		assertTrue(response.getItems().stream().allMatch(item -> item.getSuccess().equals("N/A")
 				&& item.getExpectedVal() != null && item.getDateTime() != null));
+	}
+
+	/**
+	 * Test method for getSimulation
+	 * {@link com.kssandra.ksd_ws.service.IntradaySimulationService#getSimulation(com.kssandra.ksd_ws.request.IntradaySimulationRequest)}.
+	 * 
+	 * @throws KsdServiceException
+	 */
+	@Test
+	@DisplayName("Simulation - Has evaluated predictions")
+	void testGetSimulationEvaluatedPredictions() throws KsdServiceException {
+
+		// The crypto currency has prediction data stored in DB
+		CryptoCurrencyDto cxCurr = new CryptoCurrencyDto("BBB");
+		when(cxCurrDao.findByCode("BBB")).thenReturn(cxCurr);
+		List<PredictionDto> predictions = generatePredictions();
+
+		when(predictionDao.findBetweenDates(eq(cxCurr), any(), any())).thenReturn(predictions);
+		when(predictionSuccessDao.findSuccess(cxCurr)).thenReturn(buildSuccessList(predictions));
+		when(cxDataDao.getCurrVal(cxCurr)).thenReturn(4.58);
 
 		// There are evaluated predictions
-		when(predictionSuccessDao.findSuccess(cxCurr)).thenReturn(buildSuccessList(predictions));
-		response = intradaySimulationService.getSimulation(buildIntraRq("BBB", "EUR", "M15", null, 50.7));
+		IntradaySimulationResponse response = intradaySimulationService
+				.getSimulation(buildIntraRq("BBB", "EUR", "M15", null, 50.7));
+
 		assertNotNull(response.getItems());
 		assertFalse(response.getItems().isEmpty());
+
+	}
+
+	/**
+	 * Test method for getSimulation
+	 * {@link com.kssandra.ksd_ws.service.IntradaySimulationService#getSimulation(com.kssandra.ksd_ws.request.IntradaySimulationRequest)}.
+	 * 
+	 * @throws KsdServiceException
+	 */
+	@Test
+	@DisplayName("Simulation - Percents")
+	void testGetSimulationPercents() throws KsdServiceException {
+
+		// The crypto currency has prediction data stored in DB
+		CryptoCurrencyDto cxCurr = new CryptoCurrencyDto("BBB");
+		when(cxCurrDao.findByCode("BBB")).thenReturn(cxCurr);
+		List<PredictionDto> predictions = generatePredictions();
+
+		when(predictionDao.findBetweenDates(eq(cxCurr), any(), any())).thenReturn(predictions);
+		when(predictionSuccessDao.findSuccess(cxCurr)).thenReturn(buildSuccessList(predictions));
+		when(cxDataDao.getCurrVal(cxCurr)).thenReturn(4.58);
+
+		// There are evaluated predictions
+		IntradaySimulationResponse response = intradaySimulationService
+				.getSimulation(buildIntraRq("BBB", "EUR", "M15", null, 50.7));
+
 		// All items has a percent value as success because there are evaluated past
 		// predictions for all of them
 		List<IntradaySimulationResponseItem> items = response.getItems();
@@ -140,8 +313,36 @@ class IntradaySimulationServiceTest {
 		assertTrue(items.stream().allMatch(item -> !item.getSuccess().equals("N/A") && item.getSuccess().contains("%")
 				&& item.getExpectedVal() != null && item.getDateTime() != null && item.getProfit() != null));
 
-		IntervalEnum interval = IntervalEnum.valueOf(rqInterval);
+	}
 
+	/**
+	 * Test method for getSimulation
+	 * {@link com.kssandra.ksd_ws.service.IntradaySimulationService#getSimulation(com.kssandra.ksd_ws.request.IntradaySimulationRequest)}.
+	 * 
+	 * @throws KsdServiceException
+	 */
+	@Test
+	@DisplayName("Simulation - Has evaluated predictions. Items")
+	void testGetSimulationItems() throws KsdServiceException {
+
+		// The crypto currency has prediction data stored in DB
+		CryptoCurrencyDto cxCurr = new CryptoCurrencyDto("BBB");
+		when(cxCurrDao.findByCode("BBB")).thenReturn(cxCurr);
+		List<PredictionDto> predictions = generatePredictions();
+		String rqInterval = "M15";
+
+		when(predictionDao.findBetweenDates(eq(cxCurr), any(), any())).thenReturn(predictions);
+		when(predictionSuccessDao.findSuccess(cxCurr)).thenReturn(buildSuccessList(predictions));
+		when(cxDataDao.getCurrVal(cxCurr)).thenReturn(4.58);
+
+		// There are evaluated predictions
+		IntradaySimulationResponse response = intradaySimulationService
+				.getSimulation(buildIntraRq("BBB", "EUR", "M15", null, 50.7));
+
+		// All items has a percent value as success because there are evaluated past
+		// predictions for all of them
+		List<IntradaySimulationResponseItem> items = response.getItems();
+		IntervalEnum interval = IntervalEnum.valueOf(rqInterval);
 		Iterator<IntradaySimulationResponseItem> iter = items.iterator();
 		IntradaySimulationResponseItem current, previous = iter.next();
 

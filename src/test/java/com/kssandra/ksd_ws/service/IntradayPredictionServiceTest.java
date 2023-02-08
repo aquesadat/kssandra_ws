@@ -15,6 +15,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -55,51 +56,97 @@ class IntradayPredictionServiceTest {
 	PredictionSuccessDao predictionSuccessDao;
 
 	/**
+	 * Test method for
+	 * {@link com.kssandra.ksd_ws.service.IntradayPredictionService#getPrediction(com.kssandra.ksd_ws.request.IntradayPredictionRequest)}.
+	 * 
+	 * @throws KsdServiceException
+	 */
+	@Test
+	@DisplayName("Prediction - Cx not configured")
+	void testGetPredictionCxNotConfigured() throws KsdServiceException {
+		// Crypto currency not configured in DB
+		when(cxCurrDao.findByCode("XXX")).thenReturn(null);
+
+		assertThrows(KsdServiceException.class,
+				() -> intradayPredictionService.getPrediction(buildIntraRq("XXX", null, null)));
+	}
+
+	/**
+	 * Test method for
+	 * {@link com.kssandra.ksd_ws.service.IntradayPredictionService#getPrediction(com.kssandra.ksd_ws.request.IntradayPredictionRequest)}.
+	 * 
+	 * @throws KsdServiceException
+	 */
+	@Test
+	@DisplayName("Prediction - Prediction not stored")
+	void testGePredictionPriceNotStored() throws KsdServiceException {
+		// No prediction data stored in DB for the crypto currency
+		CryptoCurrencyDto cxCurr = new CryptoCurrencyDto("AAA");
+		when(cxCurrDao.findByCode("AAA")).thenReturn(cxCurr);
+		when(predictionDao.findBetweenDates(eq(cxCurr), any(), any())).thenReturn(new ArrayList<PredictionDto>());
+
+		IntradayPredictionResponse response = intradayPredictionService
+				.getPrediction(buildIntraRq("AAA", "EUR", "M15"));
+
+		assertEquals("AAA", response.getCxCurr());
+		assertEquals("EUR", response.getExCurr());
+		assertTrue(response.getItems().isEmpty());
+	}
+
+	/**
+	 * Test method for
+	 * {@link com.kssandra.ksd_ws.service.IntradayPredictionService#getPrediction(com.kssandra.ksd_ws.request.IntradayPredictionRequest)}.
+	 * 
+	 * @throws KsdServiceException
+	 */
+	@Test
+	@DisplayName("Prediction - No evaluated past predictions")
+	void testGetPredictionPricePredNotEval() throws KsdServiceException {
+
+		// The crypto currency has prediction data stored in DB
+		CryptoCurrencyDto cxCurr = new CryptoCurrencyDto("BBB");
+		List<PredictionDto> predictions = buildItemList();
+		when(cxCurrDao.findByCode("BBB")).thenReturn(cxCurr);
+		when(predictionDao.findBetweenDates(eq(cxCurr), any(), any())).thenReturn(predictions);
+		// No evaluated past predictions is stored in DB for the crypto currency
+		when(predictionSuccessDao.findSuccess(cxCurr)).thenReturn(new ArrayList<PredictionSuccessDto>());
+
+		String rqInterval = "M15";
+		IntradayPredictionResponse response = intradayPredictionService
+				.getPrediction(buildIntraRq("BBB", "EUR", rqInterval));
+
+		assertEquals("BBB", response.getCxCurr());
+		assertEquals("EUR", response.getExCurr());
+		assertNotNull(response.getItems());
+		assertFalse(response.getItems().isEmpty());
+		// All items has success="N/A" because there aren't evaluated past prediction
+		assertTrue(response.getItems().stream().allMatch(item -> item.getSuccess().equals("N/A")
+				&& item.getExpectedVal() != null && item.getDateTime() != null));
+	}
+
+	/**
 	 * Test method for getPrediction
 	 * {@link com.kssandra.ksd_ws.service.IntradayPredictionService#getPrediction(com.kssandra.ksd_ws.request.IntradayPredictionRequest)}.
 	 * 
 	 * @throws KsdServiceException
 	 */
 	@Test
-	void testGetPrediction() throws KsdServiceException {
-
-		// Crypto currency not configured in DB
-		when(cxCurrDao.findByCode("XXX")).thenReturn(null);
-		assertThrows(KsdServiceException.class,
-				() -> intradayPredictionService.getPrediction(buildIntraRq("XXX", null, null)));
-
-		// No prediction data stored in DB for the crypto currency
-		CryptoCurrencyDto cxCurr = new CryptoCurrencyDto("AAA");
-		when(cxCurrDao.findByCode("AAA")).thenReturn(cxCurr);
-		when(predictionDao.findBetweenDates(eq(cxCurr), any(), any())).thenReturn(new ArrayList<PredictionDto>());
-		IntradayPredictionResponse response = intradayPredictionService
-				.getPrediction(buildIntraRq("AAA", "EUR", "M15"));
-		assertEquals("AAA", response.getCxCurr());
-		assertEquals("EUR", response.getExCurr());
-		assertTrue(response.getItems().isEmpty());
+	@DisplayName("Prediction - Percents")
+	void testGetPredictionPercents() throws KsdServiceException {
 
 		// The crypto currency has prediction data stored in DB
-		cxCurr = new CryptoCurrencyDto("BBB");
-		when(cxCurrDao.findByCode("BBB")).thenReturn(cxCurr);
+		CryptoCurrencyDto cxCurr = new CryptoCurrencyDto("BBB");
 		List<PredictionDto> predictions = buildItemList();
+
+		when(cxCurrDao.findByCode("BBB")).thenReturn(cxCurr);
 		when(predictionDao.findBetweenDates(eq(cxCurr), any(), any())).thenReturn(predictions);
-
 		// No evaluated past predictions is stored in DB for the crypto currency
-		when(predictionSuccessDao.findSuccess(cxCurr)).thenReturn(new ArrayList<PredictionSuccessDto>());
-		String rqInterval = "M15";
-		response = intradayPredictionService.getPrediction(buildIntraRq("BBB", "EUR", rqInterval));
-		assertEquals("BBB", response.getCxCurr());
-		assertEquals("EUR", response.getExCurr());
-		assertNotNull(response.getItems());
-		assertFalse(response.getItems().isEmpty());
-
-		// All items has success="N/A" because there aren't evaluated past prediction
-		assertTrue(response.getItems().stream().allMatch(item -> item.getSuccess().equals("N/A")
-				&& item.getExpectedVal() != null && item.getDateTime() != null));
-
 		// There are evaluated predictions
 		when(predictionSuccessDao.findSuccess(cxCurr)).thenReturn(buildSuccessList(predictions));
-		response = intradayPredictionService.getPrediction(buildIntraRq("BBB", "EUR", "M15"));
+
+		IntradayPredictionResponse response = intradayPredictionService
+				.getPrediction(buildIntraRq("BBB", "EUR", "M15"));
+
 		assertNotNull(response.getItems());
 		assertFalse(response.getItems().isEmpty());
 		// All items has a percent value as success because there are evaluated past
@@ -110,8 +157,36 @@ class IntradayPredictionServiceTest {
 		assertTrue(items.stream().allMatch(item -> !item.getSuccess().equals("N/A") && item.getSuccess().contains("%")
 				&& item.getExpectedVal() != null && item.getDateTime() != null));
 
-		IntervalEnum interval = IntervalEnum.valueOf(rqInterval);
+	}
 
+	/**
+	 * Test method for getPrediction
+	 * {@link com.kssandra.ksd_ws.service.IntradayPredictionService#getPrediction(com.kssandra.ksd_ws.request.IntradayPredictionRequest)}.
+	 * 
+	 * @throws KsdServiceException
+	 */
+	@Test
+	@DisplayName("Prediction - Items")
+	void testGetPredictionItems() throws KsdServiceException {
+
+		// The crypto currency has prediction data stored in DB
+		CryptoCurrencyDto cxCurr = new CryptoCurrencyDto("BBB");
+		List<PredictionDto> predictions = buildItemList();
+		String rqInterval = "M15";
+
+		when(cxCurrDao.findByCode("BBB")).thenReturn(cxCurr);
+		when(predictionDao.findBetweenDates(eq(cxCurr), any(), any())).thenReturn(predictions);
+		// No evaluated past predictions is stored in DB for the crypto currency
+		// There are evaluated predictions
+		when(predictionSuccessDao.findSuccess(cxCurr)).thenReturn(buildSuccessList(predictions));
+
+		IntradayPredictionResponse response = intradayPredictionService
+				.getPrediction(buildIntraRq("BBB", "EUR", "M15"));
+
+		// All items has a percent value as success because there are evaluated past
+		// predictions for all of them
+		List<IntradayPredictionResponseItem> items = response.getItems();
+		IntervalEnum interval = IntervalEnum.valueOf(rqInterval);
 		Iterator<IntradayPredictionResponseItem> iter = items.iterator();
 		IntradayPredictionResponseItem current, previous = iter.next();
 

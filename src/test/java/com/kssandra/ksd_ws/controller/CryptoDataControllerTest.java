@@ -2,6 +2,7 @@ package com.kssandra.ksd_ws.controller;
 
 import static org.mockito.Mockito.when;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -49,21 +50,30 @@ class CryptoDataControllerTest {
 	private static final String urlEndpoint = "/api/v1/intraday/data";
 
 	/**
-	 * Test method for getIntraDayData with any kind of KO response
+	 * Test method for getIntraDayData with a malformed request
 	 * {@link com.kssandra.ksd_ws.controller.CryptoDataController#getIntraDayData(com.kssandra.ksd_ws.request.IntradayDataRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
 	 */
 	@Test
-	void testGetIntraDayDataKO() throws Exception {
+	@DisplayName("CxData. Malformed Request")
+	void testGetIntraDayDataBadRequest() throws Exception {
 
-		String request = null;
-
-		// Bad Request - Malformed request
-		request = "";
+		String request = "";
 		mvc.perform(post(urlEndpoint).content(request).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest());
 
-		// Bad Request - CxCurr
-		request = getMockRequest(null, ExchangeCurrEnum.EUR.getValue(), false, IntervalEnum.M15.getName());
+	}
+
+	/**
+	 * Test method for getIntraDayData with bad request response (cxCurr)
+	 * {@link com.kssandra.ksd_ws.controller.CryptoDataController#getIntraDayData(com.kssandra.ksd_ws.request.IntradayDataRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
+	 * 
+	 * @throws Exception the exception
+	 */
+	@Test
+	@DisplayName("CxData. BadRQ cxCurr")
+	void testGetIntraDayDataCxCurrBadRequest() throws Exception {
+
+		String request = getMockRequest(null, ExchangeCurrEnum.EUR.getValue(), false, IntervalEnum.M15.getName());
 		mvc.perform(post(urlEndpoint).content(request).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest()).andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.message").value("cxCurr - Missing field value"));
@@ -72,9 +82,19 @@ class CryptoDataControllerTest {
 		mvc.perform(post(urlEndpoint).content(request).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest()).andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.message").value("cxCurr - Invalid field value"));
+	}
 
-		// Bad Request - exCurr
-		request = getMockRequest(CryptoCurrEnum.ADA.getValue(), null, false, IntervalEnum.M15.getName());
+	/**
+	 * Test method for getIntraDayData with bad request response (exCurr)
+	 * {@link com.kssandra.ksd_ws.controller.CryptoDataController#getIntraDayData(com.kssandra.ksd_ws.request.IntradayDataRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
+	 * 
+	 * @throws Exception the exception
+	 */
+	@Test
+	@DisplayName("CxData. BadRQ exCurr")
+	void testGetIntraDayDataExCurrBadRequest() throws Exception {
+
+		String request = getMockRequest(CryptoCurrEnum.ADA.getValue(), null, false, IntervalEnum.M15.getName());
 		mvc.perform(post(urlEndpoint).content(request).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest()).andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.message").value("exCurr - Missing field value"));
@@ -83,9 +103,19 @@ class CryptoDataControllerTest {
 		mvc.perform(post(urlEndpoint).content(request).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest()).andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.message").value("exCurr - Invalid field value"));
+	}
 
-		// Bad Request - Interval
-		request = getMockRequest(CryptoCurrEnum.ADA.getValue(), ExchangeCurrEnum.EUR.getValue(), false, null);
+	/**
+	 * Test method for getIntraDayData with bad request response (interval)
+	 * {@link com.kssandra.ksd_ws.controller.CryptoDataController#getIntraDayData(com.kssandra.ksd_ws.request.IntradayDataRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
+	 * 
+	 * @throws Exception the exception
+	 */
+	@Test
+	@DisplayName("CxData. BadRQ interval")
+	void testGetIntraDayDataIntervalBadRequest() throws Exception {
+
+		String request = getMockRequest(CryptoCurrEnum.ADA.getValue(), ExchangeCurrEnum.EUR.getValue(), false, null);
 		mvc.perform(post(urlEndpoint).content(request).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest()).andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.message").value("interval - Missing field value"));
@@ -94,13 +124,24 @@ class CryptoDataControllerTest {
 		mvc.perform(post(urlEndpoint).content(request).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest()).andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.message").value("interval - Invalid field value"));
+	}
 
-		// Conflict - Custom Exception
-		request = getMockRequest(CryptoCurrEnum.ADA.getValue(), ExchangeCurrEnum.EUR.getValue(), false,
+	/**
+	 * Test method for getIntraDayData with custom exception
+	 * {@link com.kssandra.ksd_ws.controller.CryptoDataController#getIntraDayData(com.kssandra.ksd_ws.request.IntradayDataRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
+	 * 
+	 * @throws Exception the exception
+	 */
+	@Test
+	@DisplayName("CxData. Custom Exception")
+	void testGetIntraDayDataCustomEx() throws Exception {
+
+		String request = getMockRequest(CryptoCurrEnum.ADA.getValue(), ExchangeCurrEnum.EUR.getValue(), false,
 				IntervalEnum.M15.getName());
 		when(intradayDataService.getData(any())).thenThrow(KsdServiceException.class);
 		mvc.perform(post(urlEndpoint).content(request).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isConflict());
+
 	}
 
 	/**

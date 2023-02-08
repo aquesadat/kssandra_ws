@@ -6,17 +6,15 @@ package com.kssandra.ksd_ws.service;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
-import org.assertj.core.util.Arrays;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,16 +23,13 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import com.kssandra.ksd_common.dto.CryptoCurrencyDto;
 import com.kssandra.ksd_common.dto.PredictionDto;
 import com.kssandra.ksd_common.dto.PredictionSuccessDto;
-import com.kssandra.ksd_common.util.DateUtils;
 import com.kssandra.ksd_persistence.dao.CryptoCurrencyDao;
 import com.kssandra.ksd_persistence.dao.CryptoDataDao;
 import com.kssandra.ksd_persistence.dao.PredictionDao;
 import com.kssandra.ksd_persistence.dao.PredictionSuccessDao;
 import com.kssandra.ksd_ws.enums.ExchangeCurrEnum;
-import com.kssandra.ksd_ws.enums.IntervalEnum;
 import com.kssandra.ksd_ws.request.IntradaySuggestionRequest;
-import com.kssandra.ksd_ws.response.IntradaySimulationResponse;
-import com.kssandra.ksd_ws.response.IntradaySimulationResponseItem;
+
 import com.kssandra.ksd_ws.response.IntradaySuggestionResponse;
 import com.kssandra.ksd_ws.response.IntradaySuggestionResponseItem;
 
@@ -69,13 +64,25 @@ class IntradaySuggestionServiceTest {
 	 * {@link com.kssandra.ksd_ws.service.IntradaySuggestionService#getSuggestion(com.kssandra.ksd_ws.request.IntradaySuggestionRequest)}.
 	 */
 	@Test
-	void testGetSuggestion() {
+	@DisplayName("Suggestion - Cx not configured")
+	void testGetSuggestionCxNotConfigured() {
 
 		// No currencies configured as active
 		when(cxCurrDao.getAllActiveCxCurrencies()).thenReturn(new ArrayList<CryptoCurrencyDto>());
+
 		IntradaySuggestionResponse response = intradaySuggestionService
 				.getSuggestion(buildIntraRq(ExchangeCurrEnum.EUR.getValue(), null));
+
 		assertTrue(response.getItems().isEmpty());
+	}
+
+	/**
+	 * Test method for
+	 * {@link com.kssandra.ksd_ws.service.IntradaySuggestionService#getSuggestion(com.kssandra.ksd_ws.request.IntradaySuggestionRequest)}.
+	 */
+	@Test
+	@DisplayName("Suggestion - No predictions")
+	void testGetSuggestionNoPredictions() {
 
 		// No prediction data stored in DB for the crypto currency
 		CryptoCurrencyDto cxCurrA = new CryptoCurrencyDto("AAA");
@@ -85,26 +92,67 @@ class IntradaySuggestionServiceTest {
 		cxCurrs.add(cxCurrA);
 		cxCurrs.add(cxCurrB);
 		cxCurrs.add(cxCurrC);
+
 		when(cxCurrDao.getAllActiveCxCurrencies()).thenReturn(cxCurrs);
 		when(predictionDao.findByDate(any(), any())).thenReturn(new ArrayList<PredictionDto>());
-		response = intradaySuggestionService.getSuggestion(buildIntraRq(ExchangeCurrEnum.EUR.getValue(), null));
+		IntradaySuggestionResponse response = intradaySuggestionService
+				.getSuggestion(buildIntraRq(ExchangeCurrEnum.EUR.getValue(), null));
+
 		assertEquals("EUR", response.getExCurr());
 		assertTrue(response.getItems().isEmpty());
+	}
 
+	/**
+	 * Test method for
+	 * {@link com.kssandra.ksd_ws.service.IntradaySuggestionService#getSuggestion(com.kssandra.ksd_ws.request.IntradaySuggestionRequest)}.
+	 */
+	@Test
+	@DisplayName("Suggestion - No evaluated predictions")
+	void testGetSuggestionNoEvaluatedPredictions() {
+
+		// No prediction data stored in DB for the crypto currency
+		CryptoCurrencyDto cxCurrA = new CryptoCurrencyDto("AAA");
+		CryptoCurrencyDto cxCurrB = new CryptoCurrencyDto("BBB");
+		CryptoCurrencyDto cxCurrC = new CryptoCurrencyDto("CCC");
+		List<CryptoCurrencyDto> cxCurrs = new ArrayList<>();
+		cxCurrs.add(cxCurrA);
+		cxCurrs.add(cxCurrB);
+		cxCurrs.add(cxCurrC);
+
+		when(cxCurrDao.getAllActiveCxCurrencies()).thenReturn(cxCurrs);
 		// The crypto currencies have prediction data stored in DB
 		when(predictionDao.findByDate(eq(cxCurrA), any())).thenReturn(generatePredictions(cxCurrA));
 		when(predictionDao.findByDate(eq(cxCurrB), any())).thenReturn(generatePredictions(cxCurrB));
 		when(predictionDao.findByDate(eq(cxCurrC), any())).thenReturn(generatePredictions(cxCurrC));
 
-		// No evaluated past predictions is stored in DB for the crypto currency
-		when(predictionSuccessDao.findSuccess(cxCurrA)).thenReturn(new ArrayList<PredictionSuccessDto>());
-		when(predictionSuccessDao.findSuccess(cxCurrB)).thenReturn(new ArrayList<PredictionSuccessDto>());
-		when(predictionSuccessDao.findSuccess(cxCurrC)).thenReturn(new ArrayList<PredictionSuccessDto>());
-		response = intradaySuggestionService.getSuggestion(buildIntraRq(ExchangeCurrEnum.EUR.getValue(), null));
+		IntradaySuggestionResponse response = intradaySuggestionService
+				.getSuggestion(buildIntraRq(ExchangeCurrEnum.EUR.getValue(), null));
 		assertEquals("EUR", response.getExCurr());
 		assertNotNull(response.getItems());
 		assertFalse(response.getItems().isEmpty());
+	}
 
+	/**
+	 * Test method for
+	 * {@link com.kssandra.ksd_ws.service.IntradaySuggestionService#getSuggestion(com.kssandra.ksd_ws.request.IntradaySuggestionRequest)}.
+	 */
+	@Test
+	@DisplayName("Suggestion - Evaluated predictions")
+	void testGetSuggestionEvaluatedPredictions() {
+
+		// No prediction data stored in DB for the crypto currency
+		CryptoCurrencyDto cxCurrA = new CryptoCurrencyDto("AAA");
+		CryptoCurrencyDto cxCurrB = new CryptoCurrencyDto("BBB");
+		CryptoCurrencyDto cxCurrC = new CryptoCurrencyDto("CCC");
+		List<CryptoCurrencyDto> cxCurrs = new ArrayList<>();
+		cxCurrs.add(cxCurrA);
+		cxCurrs.add(cxCurrB);
+		cxCurrs.add(cxCurrC);
+
+		when(cxCurrDao.getAllActiveCxCurrencies()).thenReturn(cxCurrs);
+		when(predictionDao.findByDate(eq(cxCurrA), any())).thenReturn(generatePredictions(cxCurrA));
+		when(predictionDao.findByDate(eq(cxCurrB), any())).thenReturn(generatePredictions(cxCurrB));
+		when(predictionDao.findByDate(eq(cxCurrC), any())).thenReturn(generatePredictions(cxCurrC));
 		// There are evaluated predictions
 		when(predictionSuccessDao.findSuccess(cxCurrA))
 				.thenReturn(buildSuccessList(generatePredictions(cxCurrA), cxCurrA));
@@ -112,14 +160,53 @@ class IntradaySuggestionServiceTest {
 				.thenReturn(buildSuccessList(generatePredictions(cxCurrB), cxCurrB));
 		when(predictionSuccessDao.findSuccess(cxCurrC))
 				.thenReturn(buildSuccessList(generatePredictions(cxCurrC), cxCurrC));
-
 		when(cxDataDao.getCurrVal(cxCurrA)).thenReturn(4.58);
 		when(cxDataDao.getCurrVal(cxCurrB)).thenReturn(5.03);
 		when(cxDataDao.getCurrVal(cxCurrC)).thenReturn(10.80);
-		response = intradaySuggestionService.getSuggestion(buildIntraRq(ExchangeCurrEnum.EUR.getValue(), null));
+
+		IntradaySuggestionResponse response = intradaySuggestionService
+				.getSuggestion(buildIntraRq(ExchangeCurrEnum.EUR.getValue(), null));
+
 		assertNotNull(response.getItems());
 		assertFalse(response.getItems().isEmpty());
 		assertEquals(3, response.getItems().size());
+	}
+
+	/**
+	 * Test method for
+	 * {@link com.kssandra.ksd_ws.service.IntradaySuggestionService#getSuggestion(com.kssandra.ksd_ws.request.IntradaySuggestionRequest)}.
+	 */
+	@Test
+	@DisplayName("Suggestion - Percents")
+	void testGetSuggestionPercents() {
+
+		// No prediction data stored in DB for the crypto currency
+		CryptoCurrencyDto cxCurrA = new CryptoCurrencyDto("AAA");
+		CryptoCurrencyDto cxCurrB = new CryptoCurrencyDto("BBB");
+		CryptoCurrencyDto cxCurrC = new CryptoCurrencyDto("CCC");
+		List<CryptoCurrencyDto> cxCurrs = new ArrayList<>();
+		cxCurrs.add(cxCurrA);
+		cxCurrs.add(cxCurrB);
+		cxCurrs.add(cxCurrC);
+
+		when(cxCurrDao.getAllActiveCxCurrencies()).thenReturn(cxCurrs);
+		when(predictionDao.findByDate(eq(cxCurrA), any())).thenReturn(generatePredictions(cxCurrA));
+		when(predictionDao.findByDate(eq(cxCurrB), any())).thenReturn(generatePredictions(cxCurrB));
+		when(predictionDao.findByDate(eq(cxCurrC), any())).thenReturn(generatePredictions(cxCurrC));
+		// There are evaluated predictions
+		when(predictionSuccessDao.findSuccess(cxCurrA))
+				.thenReturn(buildSuccessList(generatePredictions(cxCurrA), cxCurrA));
+		when(predictionSuccessDao.findSuccess(cxCurrB))
+				.thenReturn(buildSuccessList(generatePredictions(cxCurrB), cxCurrB));
+		when(predictionSuccessDao.findSuccess(cxCurrC))
+				.thenReturn(buildSuccessList(generatePredictions(cxCurrC), cxCurrC));
+		when(cxDataDao.getCurrVal(cxCurrA)).thenReturn(4.58);
+		when(cxDataDao.getCurrVal(cxCurrB)).thenReturn(5.03);
+		when(cxDataDao.getCurrVal(cxCurrC)).thenReturn(10.80);
+
+		IntradaySuggestionResponse response = intradaySuggestionService
+				.getSuggestion(buildIntraRq(ExchangeCurrEnum.EUR.getValue(), null));
+
 		// All items has a percent value as success because there are evaluated past
 		// predictions for all of them
 		List<IntradaySuggestionResponseItem> items = response.getItems();
@@ -129,7 +216,46 @@ class IntradaySuggestionServiceTest {
 				.allMatch(item -> (item.getSuccess().equals("N/A") || item.getSuccess().contains("%"))
 						&& item.getExpectedVal() != null && item.getCxCurr() != null && item.getExpectedRaise() != null
 						&& item.getRank() > 0));
+	}
 
+	/**
+	 * Test method for
+	 * {@link com.kssandra.ksd_ws.service.IntradaySuggestionService#getSuggestion(com.kssandra.ksd_ws.request.IntradaySuggestionRequest)}.
+	 */
+	@Test
+	@DisplayName("Suggestion - NumResult")
+	void testGetSuggestionNumResult() {
+
+		// No prediction data stored in DB for the crypto currency
+		CryptoCurrencyDto cxCurrA = new CryptoCurrencyDto("AAA");
+		CryptoCurrencyDto cxCurrB = new CryptoCurrencyDto("BBB");
+		CryptoCurrencyDto cxCurrC = new CryptoCurrencyDto("CCC");
+		List<CryptoCurrencyDto> cxCurrs = new ArrayList<>();
+		cxCurrs.add(cxCurrA);
+		cxCurrs.add(cxCurrB);
+		cxCurrs.add(cxCurrC);
+
+		when(cxCurrDao.getAllActiveCxCurrencies()).thenReturn(cxCurrs);
+		when(predictionDao.findByDate(eq(cxCurrA), any())).thenReturn(generatePredictions(cxCurrA));
+		when(predictionDao.findByDate(eq(cxCurrB), any())).thenReturn(generatePredictions(cxCurrB));
+		when(predictionDao.findByDate(eq(cxCurrC), any())).thenReturn(generatePredictions(cxCurrC));
+		// There are evaluated predictions
+		when(predictionSuccessDao.findSuccess(cxCurrA))
+				.thenReturn(buildSuccessList(generatePredictions(cxCurrA), cxCurrA));
+		when(predictionSuccessDao.findSuccess(cxCurrB))
+				.thenReturn(buildSuccessList(generatePredictions(cxCurrB), cxCurrB));
+		when(predictionSuccessDao.findSuccess(cxCurrC))
+				.thenReturn(buildSuccessList(generatePredictions(cxCurrC), cxCurrC));
+		when(cxDataDao.getCurrVal(cxCurrA)).thenReturn(4.58);
+		when(cxDataDao.getCurrVal(cxCurrB)).thenReturn(5.03);
+		when(cxDataDao.getCurrVal(cxCurrC)).thenReturn(10.80);
+
+		IntradaySuggestionResponse response = intradaySuggestionService
+				.getSuggestion(buildIntraRq(ExchangeCurrEnum.EUR.getValue(), null));
+
+		// All items has a percent value as success because there are evaluated past
+		// predictions for all of them
+		List<IntradaySuggestionResponseItem> items = response.getItems();
 		Iterator<IntradaySuggestionResponseItem> iter = items.iterator();
 		IntradaySuggestionResponseItem current, previous = iter.next();
 
@@ -146,6 +272,7 @@ class IntradaySuggestionServiceTest {
 		// Specified numResult > Configured cxCurrs
 		response = intradaySuggestionService.getSuggestion(buildIntraRq(ExchangeCurrEnum.EUR.getValue(), 7));
 		assertEquals(3, response.getItems().size());
+
 	}
 
 	private IntradaySuggestionRequest buildIntraRq(String exCurr, Integer numResult) {

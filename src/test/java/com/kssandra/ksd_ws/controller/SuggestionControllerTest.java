@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -49,23 +50,30 @@ class SuggestionControllerTest {
 	private static final String urlEndpoint = "/api/v1/intraday/suggest";
 
 	/**
-	 * Test method for getIntraDayData with any kind of KO response
-	 * {@link com.kssandra.ksd_ws.controller.SuggestionController#getIntraDayData(com.kssandra.ksd_ws.request.IntradaySuggestionRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
-	 * 
-	 * @throws Exception
+	 * Test method for getIntraDayData with a malformed request
+	 * {@link com.kssandra.ksd_ws.controller.SuggestionController#getIntraDayData(com.kssandra.ksd_ws.request.IntradayDataRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
 	 */
 	@Test
-	void testGetIntraDayDataKO() throws Exception {
+	@DisplayName("Suggestion. Malformed Request")
+	void testGetIntraDayDataBadRequest() throws Exception {
 
-		String request = null;
-
-		// Bad Request - Malformed request
-		request = "";
+		String request = "";
 		mvc.perform(post(urlEndpoint).content(request).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest());
 
-		// Bad Request - exCurr
-		request = getMockRequest(null, null);
+	}
+
+	/**
+	 * Test method for getIntraDayData with bad request response (exCurr)
+	 * {@link com.kssandra.ksd_ws.controller.SuggestionController#getIntraDayData(com.kssandra.ksd_ws.request.IntradayDataRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
+	 * 
+	 * @throws Exception the exception
+	 */
+	@Test
+	@DisplayName("Suggestion. BadRQ exCurr")
+	void testGetIntraDayDataExCurrBadRequest() throws Exception {
+
+		String request = getMockRequest(null, null);
 		mvc.perform(post(urlEndpoint).content(request).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest()).andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.message").value("exCurr - Missing field value"));
@@ -74,9 +82,20 @@ class SuggestionControllerTest {
 		mvc.perform(post(urlEndpoint).content(request).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest()).andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.message").value("exCurr - Invalid field value"));
+	}
+
+	/**
+	 * Test method for getIntraDayData with bad request response (numResult)
+	 * {@link com.kssandra.ksd_ws.controller.SuggestionController#getIntraDayData(com.kssandra.ksd_ws.request.IntradaySuggestionRequest, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}.
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	@DisplayName("Suggestion. BadRQ numResult")
+	void testGetIntraDayDataKO() throws Exception {
 
 		// Bad Request - numResult
-		request = getMockRequest(ExchangeCurrEnum.EUR.getValue(), 0);
+		String request = getMockRequest(ExchangeCurrEnum.EUR.getValue(), 0);
 		mvc.perform(post(urlEndpoint).content(request).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isBadRequest()).andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.message").value("numResult - Invalid field value"));
